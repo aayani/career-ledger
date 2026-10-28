@@ -1,0 +1,27 @@
+name: Validate career database
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - "resume/**"
+      - "scripts/validate_career.py"
+      - "tests/test_validate_career.py"
+      - "Makefile"
+  push:
+    paths:
+      - "docs/**"
+      - "resume/**"
+      - "scripts/validate_career.py"
+      - "tests/test_validate_career.py"
+      - "Makefile"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: make check
