@@ -28,8 +28,6 @@ Do not modify third-party or vendored skills unless the user explicitly asks to 
 
 #### Third-Party Skills
 
-- `grill-me`
-- `grilling`
 - `resume-cover-letter`
 
-Discover current descriptions and routing boundaries from each skill's frontmatter. Career intake is self-contained and does not invoke the grilling skills.
+Discover current descriptions and routing boundaries from each skill's frontmatter.
