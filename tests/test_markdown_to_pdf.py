@@ -4,7 +4,7 @@ from contextlib import redirect_stderr
 from io import StringIO
 import unittest
 
-from scripts.markdown_to_pdf import parse_args
+from scripts.markdown_to_pdf import OUTPUT_DIR, parse_args, resolve_output_path
 
 
 class MarkdownToPdfTests(unittest.TestCase):
@@ -24,6 +24,13 @@ class MarkdownToPdfTests(unittest.TestCase):
         with redirect_stderr(StringIO()):
             with self.assertRaises(SystemExit):
                 parse_args(["missing.md"])
+
+    def test_default_output_uses_output_directory(self):
+        source = Path("docs/resume/backend-engineer.md")
+        self.assertEqual(
+            OUTPUT_DIR / "backend-engineer.pdf",
+            resolve_output_path(source),
+        )
 
 
 if __name__ == "__main__":

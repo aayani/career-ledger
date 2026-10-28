@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DIST_DIR = ROOT / "dist"
+OUTPUT_DIR = ROOT / "output"
 
 RESUME_CSS = """
 body {
@@ -59,10 +59,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return args
 
 
+def resolve_output_path(source: Path, requested: Path | None = None) -> Path:
+    return requested.resolve() if requested else OUTPUT_DIR / f"{source.stem}.pdf"
+
+
 def main() -> None:
     args = parse_args()
     source = args.markdown_file.resolve()
-    output = (args.output.resolve() if args.output else DIST_DIR / f"{source.stem}.pdf")
+    output = resolve_output_path(source, args.output)
 
     if source == output:
         raise SystemExit("Input and output paths must be different.")
