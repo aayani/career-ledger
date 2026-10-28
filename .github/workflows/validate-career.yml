@@ -1,0 +1,41 @@
+name: Validate career database
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/validate-career.yml"
+      - "docs/career.md"
+      - "docs/resume/**"
+      - "scripts/**"
+      - "tests/**"
+      - "Makefile"
+  push:
+    paths:
+      - ".github/workflows/validate-career.yml"
+      - "docs/career.md"
+      - "docs/resume/**"
+      - "scripts/**"
+      - "tests/**"
+      - "Makefile"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Run tests
+        run: make test
+      - name: Validate career database
+        if: ${{ hashFiles('docs/career.md') != '' }}
+        run: make validate
+      - name: Skip career validation when no database exists
+        if: ${{ hashFiles('docs/career.md') == '' }}
+        run: echo "docs/career.md does not exist yet; unit tests passed."
