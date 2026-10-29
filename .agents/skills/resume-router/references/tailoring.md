@@ -21,7 +21,7 @@ Build this map for **particular position** from the vacancy, and for **specific 
 4. Select at most five priorities to lead the summary, the most recent roles, and `Skills`.
 5. Report genuine gaps to the user instead of covering them. When the user may hold an unrecorded fact that would close a gap, offer to record it through `career-timeline` before drafting.
 
-For **specific role** without a vacancy, offer to either use the role family's common expectations or let the user provide a representative listing. Label role-family expectations as assumptions, and do not invent a company.
+When the scope supplies a role but no vacancy, offer to either use the role family's common expectations or let the user provide a representative listing. Label role-family expectations as assumptions, and do not invent a company.
 
 ## Emphasis rules for every scope
 
@@ -29,3 +29,12 @@ For **specific role** without a vacancy, offer to either use the role family's c
 - **Give each role a distinct purpose.** Before selecting bullets, privately complete "This role demonstrates the ability to..." for each role. Choose achievements that support that purpose and avoid repeating the same kind of claim across roles.
 - **Curate skills by evidence.** List only skills whose records cite evidence. Prefer specific skills over generic ones, favour recent use, and omit skills that were only incidental to the target.
 - **Keep identity facts consistent.** Use the employers, titles, and dates exactly as recorded so the resume matches LinkedIn and other application material generated from the same database.
+
+## Output structure
+
+The following repository rules override the writer's generic section order:
+
+- Place `Personal Projects` after `Experience` only when at least one supported project strengthens the target, then place `Skills`.
+- Include at most five projects, chosen for relevance, evidence, recency, and distinctiveness.
+- Describe each project's purpose, personal contribution, relevant technology, and outcome without inventing facts.
+- Reconcile project technologies into `Skills`, remove unsupported or redundant entries, and keep terminology consistent.

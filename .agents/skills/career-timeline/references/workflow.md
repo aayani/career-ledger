@@ -2,18 +2,22 @@
 
 ## Classify and route
 
-Run `python3 scripts/inspect_state.py docs/career.md`, then use these states:
+Run `make inspect`, then use these states:
 
 - `missing` or `empty`: explain that the database stores neutral evidence, then present exactly these two onboarding options and wait for the user's choice:
   1. **Import from CV/resume:** use an existing document as unverified source material.
   2. **Guided interactive interview:** build the career record one question at a time.
-- `populated`: run `python3 scripts/validate_career.py docs/career.md`. Repair structural errors before unrelated intake; warnings may remain when they describe honest data gaps.
+- `populated`: run `make validate`. Repair structural errors before unrelated intake; warnings may remain when they describe honest data gaps.
 
-Continue when the schema version matches the template. Explain and confirm any older-schema migration; stop structural edits for a newer or missing schema version.
+Continue when the schema version matches `supported_schema_version` in [career-schema.yaml](career-schema.yaml). Explain and confirm any older-schema migration; stop structural edits for a newer or missing schema version.
 
 For a valid populated database, orient the user with its last review, latest role, covered sections, open follow-ups, estimates, and unverified claims. Follow the scope they requested instead of presenting another menu. Resume an earlier interview from open follow-ups.
 
 Treat imported claims as matching, new, richer, conflicting, or ambiguous. Do not duplicate or re-ask matching claims; present conflicts neutrally for the user to resolve. A source CV is evidence input: do not persist it, copy promotional prose, or treat it alone as verification. Clarifying gaps after an import is part of source reconciliation, not a third onboarding option.
+
+## Structure the database
+
+Treat [career-schema.yaml](career-schema.yaml) as the source of truth for database structure and authoring policy. The parser and validator load it directly. Use `tests/fixtures/career-valid.md` as a minimal hierarchy example, then validate the candidate instead of reproducing field lists or controlled values in instructions.
 
 ## Interview factual gaps
 
@@ -37,7 +41,7 @@ Close a branch when answered or when the user marks it unknown, approximate, pri
 
 Evidence notes may cite safe provenance but never store source documents, credentials, internal URLs, customer data, proprietary details, or employer-sensitive material. Prefer accurate qualitative outcomes over invented metrics.
 
-Choose ownership from demonstrated contribution: `Lead`, `Primary`, `Shared`, `Contributor`, or `Support`. Add `Disclosure: Interview-only` or `Disclosure: Do not disclose` only as exceptions to the application-safe default.
+Choose a schema-valid ownership value from demonstrated contribution. Add a schema-valid disclosure exception only when the application-safe default does not apply.
 
 Match records by stable ID, then type, organization, subject, and dates. Preserve IDs through wording and factual corrections. Make targeted edits, retain unrelated content and disclosure restrictions, keep employers reverse chronological, and maintain typed references.
 
@@ -47,10 +51,10 @@ The user's requested update and clarified answers authorize a coherent write onc
 
 1. Re-read the target and retain its baseline.
 2. Build a complete candidate outside the target.
-3. Run `python3 scripts/validate_career.py <candidate>`; partial but structurally valid databases are allowed.
+3. Run `make validate path=<candidate>`; partial but structurally valid databases are allowed.
 4. Do not replace the target while errors remain.
 5. Re-read and reconcile any concurrent target change.
 6. Apply the candidate through a patch or safe atomic replacement.
 7. Run `make check` on the final repository.
 
-Use `python3 scripts/validate_career.py --require-complete` only when a downstream resume workflow requires roles and skills. Report changed records, estimates, unverified claims, disclosure exceptions, follow-ups, and validation results. Update `Last reviewed` only after a successful factual update or completed review.
+Use `make validate-complete` only when a downstream resume workflow requires roles and skills. Report changed records, estimates, unverified claims, disclosure exceptions, follow-ups, and validation results. Update `Last reviewed` only after a successful factual update or completed review.

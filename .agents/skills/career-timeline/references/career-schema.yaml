@@ -1,0 +1,256 @@
+# Canonical source of truth for the career evidence database.
+
+supported_schema_version: "1.0"
+
+authoring_policy:
+  - Keep records neutral, factual, region-independent, and application-safe by default.
+  - Store positioning facts rather than a narrative professional summary.
+  - Preserve stable semantic IDs when wording changes.
+  - Omit empty optional fields and sections.
+  - Group multiple positions under one employer and list employers in reverse chronological order.
+  - Keep records within the configured word limits.
+  - Use function-, seniority-, domain-, and evidence- tag namespaces where applicable.
+  - Do not assign subjective skill proficiency levels.
+  - Store short, safe provenance notes without confidential documents, credentials, internal URLs, customer data, or employer-sensitive material.
+
+metadata_values:
+  Default disclosure: Application-safe
+  Language policy: Region-neutral English
+
+sections:
+  metadata: 1. Database metadata
+  identity: 2. Identity
+  positioning: 3. Positioning facts
+  experience: 4. Experience
+  languages: 9. Languages
+  record_sections:
+    5. Education: education
+    6. Certifications and licenses: certification
+    7. Projects: project
+    8. Other professional activities: activity
+    10. Career breaks: break
+    11. Skills index: skill
+    12. Data-quality follow-up: followup
+
+document_fields:
+  metadata:
+    - Schema version
+    - Last reviewed
+    - Default disclosure
+    - Language policy
+  identity:
+    - Name
+    - Location
+    - Email
+    - Phone
+    - LinkedIn
+    - GitHub
+    - Portfolio
+  positioning:
+    - Career start
+    - Primary specializations
+    - Secondary specializations
+    - Differentiators
+    - Leadership scope
+    - Industry experience
+
+value_sets:
+  verification: [Verified, Estimated, Unverified]
+  ownership: [Lead, Primary, Shared, Contributor, Support]
+  disclosure: [Interview-only, Do not disclose]
+  skill_reference: [skill]
+  evidence_reference: [role, achievement, project, activity]
+
+language_levels: [Native, Professional, Working, Elementary, Not documented]
+empty_values: ["", Unknown, Not documented, Not applicable]
+
+limits:
+  role_scope_words: 80
+  achievement_words: 130
+
+field_guidance:
+  Schema version: Version declared by supported_schema_version.
+  Last reviewed: Date of the latest successful factual review in YYYY-MM-DD format.
+  Default disclosure: Repository-wide disclosure default from metadata_values.
+  Language policy: Repository-wide language policy from metadata_values.
+  Name: Full professional name.
+  ID: Stable semantic ID using the record prefix, lowercase letters, numbers, and hyphens.
+  Employer: Employer's public name.
+  Title: Official or accurately normalized position title.
+  Location: City and country, or an accurate remote or hybrid location.
+  Email: Professional contact email address.
+  Phone: Professional contact telephone number.
+  LinkedIn: Public LinkedIn profile URL.
+  GitHub: Public GitHub profile URL.
+  Portfolio: Public portfolio URL.
+  Career start: Earliest supported career start date in YYYY-MM format.
+  Primary specializations: Best-supported principal areas of professional focus.
+  Secondary specializations: Supported complementary areas of professional focus.
+  Differentiators: Evidence-backed characteristics that distinguish the candidate.
+  Leadership scope: Factual people, technical, delivery, or organizational leadership scope.
+  Industry experience: Industries supported by the underlying records.
+  Employment type: Contractual relationship represented by a controlled value.
+  Start: Start date using the precision and special values configured for the record.
+  End: End date using the precision and special values configured for the record.
+  Career stage: Early-career or professional classification represented by a controlled value.
+  Responsibilities: Recurring responsibilities, kept separate from one-time achievements.
+  Skills: Comma-separated skill IDs from the skills index.
+  Technologies: Technologies personally used in this record.
+  Tags: Lowercase kebab-case semantic tags.
+  Practices: Optional engineering practices personally used in the role.
+  Disclosure: Optional exception to the application-safe default.
+  Context: Problem, constraint, setting, or controlled usage context appropriate to the record.
+  Contribution: Concrete personal contribution, distinct from the surrounding team's work.
+  Outcome: Measured result or accurate qualitative change; never invent a metric.
+  Scope: Product, system, team, users, boundary, or ongoing ownership appropriate to the record.
+  Ownership: Personal contribution level represented by a controlled value.
+  Verification: Verified, estimated, or unverified status based on available provenance.
+  Evidence: Short safe provenance note or comma-separated supporting record IDs, as configured.
+  Institution: Public name of the education provider.
+  Focus: Relevant study areas without promotional prose.
+  Awards: Documented awards, or Not applicable.
+  Issuer: Public name of the credential issuer.
+  Issued: Credential issue month.
+  Expires: Credential expiry month or configured special value.
+  Credential ID: Publicly safe credential identifier, or Not documented.
+  Credential URL: Public credential URL, or Not documented.
+  Status: Controlled lifecycle or follow-up status appropriate to the record.
+  Purpose: Problem or user need addressed by the project.
+  Collaborators: Named public collaborators, a safe team description, Solo, or Not documented.
+  URL: Public relevant URL, or Not documented.
+  Repository: Public repository URL, or Not documented.
+  Type: Controlled professional-activity type.
+  Organization: Associated organization, or Not applicable.
+  Date: Activity date using the configured precision or special value.
+  Description: Accurate concise description of the career break.
+  Activities: Relevant break activities, or Not documented.
+  Category: Useful factual grouping such as Backend, Frontend, Cloud, Data, or Leadership.
+  First used: Earliest supported use using the configured precision or special value.
+  Last used: Most recent supported use using the configured precision or special value.
+  Capabilities: Specific technologies and practices represented by the skill record.
+  Related records: Comma-separated IDs for records affected by the follow-up.
+  Priority: Materiality of resolving the data-quality issue.
+  Issue: Missing, conflicting, or weakly supported fact.
+  Resolution: Specific information or safe reference needed to resolve the issue.
+
+language_guidance: Map each language name to one configured language level.
+
+record_specs:
+  role:
+    prefix: role-
+    required:
+      - ID
+      - Employer
+      - Title
+      - Location
+      - Employment type
+      - Start
+      - End
+      - Career stage
+      - Scope
+      - Responsibilities
+      - Skills
+      - Technologies
+      - Tags
+    optional: [Practices, Disclosure]
+    controlled:
+      Employment type: [Permanent, Contract, Internship, Self-employed, Not documented]
+      Career stage: [Early, Professional, Not documented]
+      Disclosure: disclosure
+    dates:
+      Start: {precision: month}
+      End: {precision: month, specials: [Present]}
+    references:
+      Skills: skill_reference
+
+  achievement:
+    prefix: ach-
+    required: [ID, Context, Contribution, Outcome, Scope, Ownership, Skills, Tags, Verification, Evidence]
+    optional: [Disclosure]
+    controlled:
+      Ownership: ownership
+      Verification: verification
+      Disclosure: disclosure
+    references:
+      Skills: skill_reference
+
+  education:
+    prefix: edu-
+    required: [ID, Institution, Location, Start, End, Focus, Awards, Verification, Evidence]
+    optional: [Disclosure]
+    controlled:
+      Verification: verification
+      Disclosure: disclosure
+    dates:
+      Start: {precision: year}
+      End: {precision: year, specials: [Unknown]}
+
+  certification:
+    prefix: cert-
+    required: [ID, Issuer, Issued, Expires, Credential ID, Credential URL, Verification, Evidence]
+    optional: [Disclosure]
+    controlled:
+      Verification: verification
+      Disclosure: disclosure
+    dates:
+      Issued: {precision: month}
+      Expires: {precision: month, specials: [Does not expire, Unknown]}
+
+  project:
+    prefix: project-
+    required: [ID, Start, End, Status, Purpose, Contribution, Outcome, Collaborators, URL, Repository, Skills, Technologies, Tags, Verification, Evidence]
+    optional: [Disclosure]
+    controlled:
+      Status: [Active, Complete, Paused, Not documented]
+      Verification: verification
+      Disclosure: disclosure
+    dates:
+      Start: {precision: month, specials: [Unknown]}
+      End: {precision: month, specials: [Present, Unknown]}
+    references:
+      Skills: skill_reference
+
+  activity:
+    prefix: activity-
+    required: [ID, Type, Organization, Date, Contribution, Outcome, URL, Skills, Verification, Evidence]
+    optional: [Disclosure]
+    controlled:
+      Type: [Open source, Award, Speaking, Publication, Volunteering, Membership]
+      Verification: verification
+      Disclosure: disclosure
+    dates:
+      Date: {precision: year-or-month, specials: [Unknown]}
+    references:
+      Skills: skill_reference
+
+  break:
+    prefix: break-
+    required: [ID, Start, End, Description, Activities]
+    optional: [Disclosure]
+    controlled:
+      Disclosure: disclosure
+    dates:
+      Start: {precision: month}
+      End: {precision: month}
+
+  skill:
+    prefix: skill-
+    required: [ID, Category, First used, Last used, Context, Capabilities, Evidence]
+    optional: [Disclosure]
+    controlled:
+      Context: [Production, Commercial, Academic, Personal, Mixed]
+      Disclosure: disclosure
+    dates:
+      First used: {precision: year-or-month, specials: [Unknown]}
+      Last used: {precision: year-or-month, specials: [Present, Unknown]}
+    references:
+      Evidence: evidence_reference
+
+  followup:
+    prefix: followup-
+    required: [ID, Related records, Priority, Issue, Resolution, Status]
+    controlled:
+      Priority: [High, Medium, Low]
+      Status: [Open, Resolved]
+    references:
+      Related records: [role, achievement, education, certification, project, activity, break, skill]

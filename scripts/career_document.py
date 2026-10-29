@@ -6,26 +6,22 @@ from dataclasses import dataclass, field
 import re
 
 try:
-    from scripts.career_schema import IDENTITY_FIELDS, METADATA_FIELDS, POSITIONING_FIELDS
+    from scripts.career_schema import (
+        DATA_SECTIONS, EXPERIENCE_SECTION, IDENTITY_FIELDS, IDENTITY_SECTION,
+        LANGUAGES_SECTION, METADATA_FIELDS, METADATA_SECTION, POSITIONING_FIELDS,
+        POSITIONING_SECTION, SECTION_KINDS,
+    )
 except ModuleNotFoundError:  # Direct execution from the scripts directory.
-    from career_schema import IDENTITY_FIELDS, METADATA_FIELDS, POSITIONING_FIELDS
+    from career_schema import (
+        DATA_SECTIONS, EXPERIENCE_SECTION, IDENTITY_FIELDS, IDENTITY_SECTION,
+        LANGUAGES_SECTION, METADATA_FIELDS, METADATA_SECTION, POSITIONING_FIELDS,
+        POSITIONING_SECTION, SECTION_KINDS,
+    )
 
 
 FIELD_PATTERN = re.compile(r"^- ([^:]+):\s*(.*)$")
 PLACEHOLDER_PATTERN = re.compile(r"\[[^\]\n]+\](?!\()")
-SECTION_KINDS = {
-    "5. Education": "education",
-    "6. Certifications and licenses": "certification",
-    "7. Projects": "project",
-    "8. Other professional activities": "activity",
-    "10. Career breaks": "break", "11. Skills index": "skill",
-    "12. Data-quality follow-up": "followup",
-}
-DATA_SECTIONS = {
-    "1. Database metadata", "2. Identity", "3. Positioning facts",
-    "4. Experience", "9. Languages", *SECTION_KINDS,
-}
-KNOWN_SECTIONS = {"Schema rules", *DATA_SECTIONS}
+KNOWN_SECTIONS = DATA_SECTIONS
 
 
 @dataclass(frozen=True)
@@ -91,10 +87,10 @@ def parse_document(text: str) -> Document:
                 document.issues.append(ParseIssue(number, f"unknown section: {section}"))
             continue
         if line.startswith("##### "):
-            if section == "4. Experience" and current_role is not None:
+            if section == EXPERIENCE_SECTION and current_role is not None:
                 current = Record("achievement", line[6:].strip(), number)
                 document.records.append(current)
-            elif section == "4. Experience":
+            elif section == EXPERIENCE_SECTION:
                 document.issues.append(ParseIssue(number, "achievement heading without a role"))
                 current = None
             else:
@@ -102,11 +98,11 @@ def parse_document(text: str) -> Document:
                 current = None
             continue
         if line.startswith("#### "):
-            if section == "4. Experience" and employer is not None:
+            if section == EXPERIENCE_SECTION and employer is not None:
                 current = Record("role", line[5:].strip(), number)
                 current_role = current
                 document.records.append(current)
-            elif section == "4. Experience":
+            elif section == EXPERIENCE_SECTION:
                 document.issues.append(ParseIssue(number, "role heading without an employer"))
                 current = None
                 current_role = None
@@ -116,7 +112,7 @@ def parse_document(text: str) -> Document:
             continue
         if line.startswith("### "):
             title = line[4:].strip()
-            if section == "4. Experience":
+            if section == EXPERIENCE_SECTION:
                 employer = title
                 current = None
                 current_role = None
@@ -131,17 +127,17 @@ def parse_document(text: str) -> Document:
             continue
         name, value = match.groups()
         name = name.strip()
-        if section == "1. Database metadata":
+        if section == METADATA_SECTION:
             _store(document.metadata, name, value, number, document.issues)
-        elif section == "2. Identity":
+        elif section == IDENTITY_SECTION:
             _store(document.identity, name, value, number, document.issues)
-        elif section == "3. Positioning facts":
+        elif section == POSITIONING_SECTION:
             _store(document.positioning, name, value, number, document.issues)
-        elif section == "9. Languages":
+        elif section == LANGUAGES_SECTION:
             _store(document.languages, name, value, number, document.issues)
         elif current:
             _store(current.fields, name, value, number, document.issues)
-        elif section == "4. Experience" or _section_kind(section):
+        elif section == EXPERIENCE_SECTION or _section_kind(section):
             document.issues.append(ParseIssue(number, f"field outside record: {name}"))
     return document
 

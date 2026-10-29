@@ -1,12 +1,19 @@
-"""Executable schema for the canonical career database."""
+"""Load the executable schema for the canonical career database."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 import re
+from typing import Any
+
+import yaml
 
 
-SUPPORTED_SCHEMA_VERSION = "1.0"
+ROOT = Path(__file__).resolve().parent.parent
+CAREER_SCHEMA = (
+    ROOT / ".agents" / "skills" / "career-timeline" / "references" / "career-schema.yaml"
+)
 
 
 @dataclass(frozen=True)
@@ -25,157 +32,85 @@ class RecordSpec:
     references: dict[str, frozenset[str]] = field(default_factory=dict)
 
 
-VERIFICATION = frozenset({"Verified", "Estimated", "Unverified"})
-OWNERSHIP = frozenset({"Lead", "Primary", "Shared", "Contributor", "Support"})
-DISCLOSURE = frozenset({"Interview-only", "Do not disclose"})
-SKILL_REFERENCE = frozenset({"skill"})
-EVIDENCE_REFERENCE = frozenset({"role", "achievement", "project", "activity"})
-
-
 def fields(*names: str) -> frozenset[str]:
     return frozenset(names)
 
 
-RECORD_SPECS = {
-    "role": RecordSpec(
-        "role-",
-        fields(
-            "ID", "Employer", "Title", "Location", "Employment type", "Start",
-            "End", "Career stage", "Scope", "Responsibilities", "Skills",
-            "Technologies", "Tags",
-        ),
-        optional=fields("Practices", "Disclosure"),
+def load_schema(path: Path = CAREER_SCHEMA) -> dict[str, Any]:
+    """Load the canonical career schema."""
+    try:
+        schema = yaml.safe_load(path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as error:
+        raise RuntimeError(f"Invalid career schema YAML in {path}: {error}") from error
+    if not isinstance(schema, dict):
+        raise RuntimeError(f"Career schema must be a YAML mapping: {path}")
+    return schema
+
+
+def _resolve_values(value: str | list[str], value_sets: dict[str, list[str]]) -> frozenset[str]:
+    if isinstance(value, str):
+        if value not in value_sets:
+            raise RuntimeError(f"Unknown career schema value set: {value}")
+        value = value_sets[value]
+    return fields(*value)
+
+
+def _record_spec(raw: dict[str, Any], value_sets: dict[str, list[str]]) -> RecordSpec:
+    return RecordSpec(
+        prefix=raw["prefix"],
+        required=fields(*raw["required"]),
+        optional=fields(*raw.get("optional", [])),
         controlled={
-            "Employment type": fields(
-                "Permanent", "Contract", "Internship", "Self-employed", "Not documented"
-            ),
-            "Career stage": fields("Early", "Professional", "Not documented"),
-            "Disclosure": DISCLOSURE,
+            name: _resolve_values(values, value_sets)
+            for name, values in raw.get("controlled", {}).items()
         },
         dates={
-            "Start": DateRule("month"),
-            "End": DateRule("month", fields("Present")),
-        },
-        references={"Skills": SKILL_REFERENCE},
-    ),
-    "achievement": RecordSpec(
-        "ach-",
-        fields(
-            "ID", "Context", "Contribution", "Outcome", "Scope", "Ownership",
-            "Skills", "Tags", "Verification", "Evidence",
-        ),
-        optional=fields("Disclosure"),
-        controlled={
-            "Ownership": OWNERSHIP,
-            "Verification": VERIFICATION,
-            "Disclosure": DISCLOSURE,
-        },
-        references={"Skills": SKILL_REFERENCE},
-    ),
-    "education": RecordSpec(
-        "edu-",
-        fields(
-            "ID", "Institution", "Location", "Start", "End", "Focus", "Awards",
-            "Verification", "Evidence",
-        ),
-        optional=fields("Disclosure"),
-        controlled={"Verification": VERIFICATION, "Disclosure": DISCLOSURE},
-        dates={"Start": DateRule("year"), "End": DateRule("year", fields("Unknown"))},
-    ),
-    "certification": RecordSpec(
-        "cert-",
-        fields(
-            "ID", "Issuer", "Issued", "Expires", "Credential ID", "Credential URL",
-            "Verification", "Evidence",
-        ),
-        optional=fields("Disclosure"),
-        controlled={"Verification": VERIFICATION, "Disclosure": DISCLOSURE},
-        dates={
-            "Issued": DateRule("month"),
-            "Expires": DateRule("month", fields("Does not expire", "Unknown")),
-        },
-    ),
-    "project": RecordSpec(
-        "project-",
-        fields(
-            "ID", "Start", "End", "Status", "Purpose", "Contribution", "Outcome",
-            "Collaborators", "URL", "Repository", "Skills", "Technologies", "Tags",
-            "Verification", "Evidence",
-        ),
-        optional=fields("Disclosure"),
-        controlled={
-            "Status": fields("Active", "Complete", "Paused", "Not documented"),
-            "Verification": VERIFICATION,
-            "Disclosure": DISCLOSURE,
-        },
-        dates={
-            "Start": DateRule("month", fields("Unknown")),
-            "End": DateRule("month", fields("Present", "Unknown")),
-        },
-        references={"Skills": SKILL_REFERENCE},
-    ),
-    "activity": RecordSpec(
-        "activity-",
-        fields(
-            "ID", "Type", "Organization", "Date", "Contribution", "Outcome", "URL",
-            "Skills", "Verification", "Evidence",
-        ),
-        optional=fields("Disclosure"),
-        controlled={
-            "Type": fields(
-                "Open source", "Award", "Speaking", "Publication", "Volunteering",
-                "Membership",
-            ),
-            "Verification": VERIFICATION,
-            "Disclosure": DISCLOSURE,
-        },
-        dates={"Date": DateRule("year-or-month", fields("Unknown"))},
-        references={"Skills": SKILL_REFERENCE},
-    ),
-    "break": RecordSpec(
-        "break-",
-        fields("ID", "Start", "End", "Description", "Activities"),
-        optional=fields("Disclosure"),
-        controlled={"Disclosure": DISCLOSURE},
-        dates={"Start": DateRule("month"), "End": DateRule("month")},
-    ),
-    "skill": RecordSpec(
-        "skill-",
-        fields("ID", "Category", "First used", "Last used", "Context", "Capabilities", "Evidence"),
-        optional=fields("Disclosure"),
-        controlled={
-            "Context": fields("Production", "Commercial", "Academic", "Personal", "Mixed"),
-            "Disclosure": DISCLOSURE,
-        },
-        dates={
-            "First used": DateRule("year-or-month", fields("Unknown")),
-            "Last used": DateRule("year-or-month", fields("Present", "Unknown")),
-        },
-        references={"Evidence": EVIDENCE_REFERENCE},
-    ),
-    "followup": RecordSpec(
-        "followup-",
-        fields("ID", "Related records", "Priority", "Issue", "Resolution", "Status"),
-        controlled={
-            "Priority": fields("High", "Medium", "Low"),
-            "Status": fields("Open", "Resolved"),
+            name: DateRule(rule["precision"], fields(*rule.get("specials", [])))
+            for name, rule in raw.get("dates", {}).items()
         },
         references={
-            "Related records": fields(
-                "role", "achievement", "education", "certification", "project",
-                "activity", "break", "skill",
-            )
+            name: _resolve_values(values, value_sets)
+            for name, values in raw.get("references", {}).items()
         },
-    ),
-}
+    )
 
-METADATA_FIELDS = fields("Schema version", "Last reviewed", "Default disclosure", "Language policy")
-IDENTITY_FIELDS = fields("Name", "Location", "Email", "Phone", "LinkedIn", "GitHub", "Portfolio")
-POSITIONING_FIELDS = fields(
-    "Career start", "Primary specializations", "Secondary specializations",
-    "Differentiators", "Leadership scope", "Industry experience",
+
+SCHEMA = load_schema()
+VALUE_SETS = SCHEMA["value_sets"]
+SUPPORTED_SCHEMA_VERSION = SCHEMA["supported_schema_version"]
+METADATA_VALUES = dict(SCHEMA["metadata_values"])
+VERIFICATION = _resolve_values("verification", VALUE_SETS)
+OWNERSHIP = _resolve_values("ownership", VALUE_SETS)
+DISCLOSURE = _resolve_values("disclosure", VALUE_SETS)
+LANGUAGE_LEVELS = fields(*SCHEMA["language_levels"])
+EMPTY_VALUES = fields(*SCHEMA["empty_values"])
+ROLE_SCOPE_WORD_LIMIT = int(SCHEMA["limits"]["role_scope_words"])
+ACHIEVEMENT_WORD_LIMIT = int(SCHEMA["limits"]["achievement_words"])
+
+SECTIONS = SCHEMA["sections"]
+METADATA_SECTION = SECTIONS["metadata"]
+IDENTITY_SECTION = SECTIONS["identity"]
+POSITIONING_SECTION = SECTIONS["positioning"]
+EXPERIENCE_SECTION = SECTIONS["experience"]
+LANGUAGES_SECTION = SECTIONS["languages"]
+SECTION_KINDS = dict(SECTIONS["record_sections"])
+DATA_SECTIONS = fields(
+    METADATA_SECTION,
+    IDENTITY_SECTION,
+    POSITIONING_SECTION,
+    EXPERIENCE_SECTION,
+    LANGUAGES_SECTION,
+    *SECTION_KINDS,
 )
-EMPTY_VALUES = fields("", "Unknown", "Not documented", "Not applicable")
+
+DOCUMENT_FIELDS = SCHEMA["document_fields"]
+METADATA_FIELDS = fields(*DOCUMENT_FIELDS["metadata"])
+IDENTITY_FIELDS = fields(*DOCUMENT_FIELDS["identity"])
+POSITIONING_FIELDS = fields(*DOCUMENT_FIELDS["positioning"])
+RECORD_SPECS = {
+    kind: _record_spec(raw, VALUE_SETS)
+    for kind, raw in SCHEMA["record_specs"].items()
+}
 
 ID_PATTERN = re.compile(
     rf"^({'|'.join(re.escape(spec.prefix.removesuffix('-')) for spec in RECORD_SPECS.values())})"

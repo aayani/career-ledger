@@ -75,7 +75,7 @@ def main() -> None:
         import markdown
         import pymupdf
     except ImportError as error:
-        message = "Install dependencies from requirements/base.txt"
+        message = "Install dependencies from requirements/pdf.txt"
         raise SystemExit(message) from error
 
     html = markdown.markdown(

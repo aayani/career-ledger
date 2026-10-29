@@ -2,6 +2,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
+from scripts.career_schema import CAREER_SCHEMA, SCHEMA, load_schema
 from scripts.validate_career import validate
 
 
@@ -114,6 +115,15 @@ class CareerValidationTests(unittest.TestCase):
             any("unknown section: 7. Project" in message for message in self.errors(text))
         )
 
+    def test_legacy_schema_rules_section_is_an_error(self):
+        text = VALID_DATABASE + """
+
+## Schema rules
+"""
+        self.assertTrue(
+            any("unknown section: Schema rules" in message for message in self.errors(text))
+        )
+
     def test_experience_hierarchy_is_enforced(self):
         orphan_achievement = VALID_DATABASE.replace(
             "#### Engineer",
@@ -146,6 +156,58 @@ class CareerValidationTests(unittest.TestCase):
         self.assertTrue(any("empty metadata" in message for message in self.errors(blank)))
         newer = VALID_DATABASE.replace("- Schema version: 1.0", "- Schema version: 99.0")
         self.assertTrue(any("unsupported schema version" in message for message in self.errors(newer)))
+
+    def test_schema_is_loaded_from_yaml(self):
+        schema = CAREER_SCHEMA.read_text(encoding="utf-8")
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "career-schema.yaml"
+            path.write_text(
+                schema.replace(
+                    'supported_schema_version: "1.0"',
+                    'supported_schema_version: "9.9"',
+                    1,
+                ),
+                encoding="utf-8",
+            )
+            self.assertEqual("9.9", load_schema(path)["supported_schema_version"])
+
+    def test_schema_rejects_a_non_mapping_root(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "career-schema.yaml"
+            path.write_text("- not\n- a\n- mapping\n", encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "YAML mapping"):
+                load_schema(path)
+
+    def test_every_record_field_has_authoring_guidance(self):
+        guidance = SCHEMA["field_guidance"]
+        for kind, spec in SCHEMA["record_specs"].items():
+            with self.subTest(kind=kind):
+                fields = set(spec["required"]) | set(spec.get("optional", []))
+                self.assertEqual(set(), fields - guidance.keys())
+
+    def test_every_document_field_has_authoring_guidance(self):
+        guidance = SCHEMA["field_guidance"]
+        for section, fields in SCHEMA["document_fields"].items():
+            with self.subTest(section=section):
+                self.assertEqual(set(), set(fields) - guidance.keys())
+
+    def test_language_levels_are_enforced(self):
+        text = VALID_DATABASE + """
+
+## 9. Languages
+
+- English: Expert
+"""
+        self.assertTrue(any("invalid language level" in message for message in self.errors(text)))
+
+    def test_role_scope_word_limit_is_enforced(self):
+        long_scope = " ".join(["scope"] * 81)
+        text = VALID_DATABASE.replace("- Scope: Builds services.", f"- Scope: {long_scope}")
+        findings = self.validate_text(text)
+        self.assertTrue(any(
+            item.level == "WARNING" and "scope exceeds 80 words" in item.message
+            for item in findings
+        ))
 
     def test_partial_database_is_structurally_valid_but_not_complete(self):
         text = """# Canonical Career Evidence Database

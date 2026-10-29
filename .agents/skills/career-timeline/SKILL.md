@@ -11,9 +11,7 @@ Maintain `docs/career.md` as a neutral, evidence-aware source of truth. A suppli
 
 From the repository root, read [workflow.md](references/workflow.md), inspect `docs/career.md`, and follow only the applicable route.
 
-Read references only when their condition applies:
-
-- [career-template.md](references/career-template.md): before creating the database or changing its structure.
+Before creating the database or changing its structure, read [career-schema.yaml](references/career-schema.yaml) and inspect `tests/fixtures/career-valid.md`. The YAML file is authoritative for structure and authoring policy. The scripts load and enforce it.
 
 ## Invariants
 
