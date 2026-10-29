@@ -26,6 +26,6 @@ For **specific role** without a vacancy, base requirements on the role family's 
 ## Emphasis rules for every scope
 
 - **Follow the reader's skim order.** Give the most detail to the current role and the previous one or two roles. Keep the summary short and positioning-focused. Treat `Skills` as a searchable filter list, not a showcase.
-- **Give each role a distinct purpose.** Before selecting bullets, privately complete "This role demonstrates the ability to ___" for each role. Choose achievements that support that purpose and avoid repeating the same kind of claim across roles.
+- **Give each role a distinct purpose.** Before selecting bullets, privately complete "This role demonstrates the ability to..." for each role. Choose achievements that support that purpose and avoid repeating the same kind of claim across roles.
 - **Curate skills by evidence.** List only skills whose records cite evidence. Prefer specific skills over generic ones, favour recent use, and omit skills that were only incidental to the target.
 - **Keep identity facts consistent.** Use the employers, titles, and dates exactly as recorded so the resume matches LinkedIn and other application material generated from the same database.
