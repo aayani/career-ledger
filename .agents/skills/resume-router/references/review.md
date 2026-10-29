@@ -5,8 +5,8 @@ Run these checks against `docs/career.md` before delivering a resume. Fix every 
 ## Integrity
 
 - Every employer, date, title, metric, technology, and scope claim traces to a record.
-- Verbs match recorded `Ownership`. Do not use lead verbs such as "Led", "Owned", or "Spearheaded" for `Shared`, `Contributor`, or `Support` records.
-- `Estimated` values read as approximate, and `Unverified` claims appear only after the user confirms them.
+- Verbs match recorded `Ownership`. Use leadership verbs such as "Led", "Owned", or "Spearheaded" only for `Lead`; use contribution verbs such as "Built", "Delivered", or "Implemented" for `Primary`.
+- `Estimated` values read as approximate, and `Unverified` claims appear only after the user confirms them. When the user confirms one, offer to record that confirmation through `career-timeline` before using it.
 - No metric was added to make a bullet sound stronger. Accurate qualitative outcomes stay qualitative.
 - Career-break dates are shown honestly, with accurate activities when relevant.
 

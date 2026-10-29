@@ -45,4 +45,4 @@ For each resume, place `Personal Projects` after `Experience` only when at least
 
 Before presenting or saving any resume, run every check in [review.md](references/review.md) against `docs/career.md`. Correct failures in the draft, then report remaining gaps, assumptions, and approximate values to the user.
 
-Treat a variant the user has already submitted as frozen. Revise it by creating a new variant so the submitted version stays available for later interview rounds.
+Before overwriting an existing variant, ask whether the user has submitted it. If so, create a new variant so the submitted version stays available for later interview rounds.
