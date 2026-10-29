@@ -8,6 +8,8 @@ on:
       - "docs/resume/**"
       - "scripts/**"
       - "tests/**"
+      - ".agents/skills/career-timeline/**"
+      - "requirements/**"
       - "Makefile"
   push:
     paths:
@@ -16,6 +18,8 @@ on:
       - "docs/resume/**"
       - "scripts/**"
       - "tests/**"
+      - ".agents/skills/career-timeline/**"
+      - "requirements/**"
       - "Makefile"
 
 permissions:
@@ -31,8 +35,12 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
       - name: Run tests
         run: make test
+      - name: Verify PDF dependencies
+        run: uv run --with-requirements requirements/pdf.txt python -c "import markdown, pymupdf"
       - name: Validate career database
         if: ${{ hashFiles('docs/career.md') != '' }}
         run: make validate

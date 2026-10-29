@@ -15,16 +15,18 @@ try:
         Document, Record, is_placeholder, parse_document, unknown_section_fields,
     )
     from scripts.career_schema import (
-        DATE_PATTERN, ID_PATTERN, METADATA_FIELDS, MONTH_PATTERN, RECORD_SPECS,
-        SUPPORTED_SCHEMA_VERSION, TAG_PATTERN, YEAR_PATTERN,
+        ACHIEVEMENT_WORD_LIMIT, DATE_PATTERN, ID_PATTERN, LANGUAGE_LEVELS,
+        METADATA_FIELDS, METADATA_VALUES, MONTH_PATTERN, RECORD_SPECS,
+        ROLE_SCOPE_WORD_LIMIT, SUPPORTED_SCHEMA_VERSION, TAG_PATTERN, YEAR_PATTERN,
     )
 except ModuleNotFoundError:  # Direct execution from the scripts directory.
     from career_document import (
         Document, Record, is_placeholder, parse_document, unknown_section_fields,
     )
     from career_schema import (
-        DATE_PATTERN, ID_PATTERN, METADATA_FIELDS, MONTH_PATTERN, RECORD_SPECS,
-        SUPPORTED_SCHEMA_VERSION, TAG_PATTERN, YEAR_PATTERN,
+        ACHIEVEMENT_WORD_LIMIT, DATE_PATTERN, ID_PATTERN, LANGUAGE_LEVELS,
+        METADATA_FIELDS, METADATA_VALUES, MONTH_PATTERN, RECORD_SPECS,
+        ROLE_SCOPE_WORD_LIMIT, SUPPORTED_SCHEMA_VERSION, TAG_PATTERN, YEAR_PATTERN,
     )
 
 
@@ -73,16 +75,21 @@ def validate_metadata(document: Document, text: str) -> list[Finding]:
             date.fromisoformat(reviewed.value)
         except ValueError:
             findings.append(Finding("ERROR", reviewed.line, f"invalid last-reviewed date: {reviewed.value}"))
-    for name, expected in {
-        "Default disclosure": "Application-safe",
-        "Language policy": "Region-neutral English",
-    }.items():
+    for name, expected in METADATA_VALUES.items():
         entry = document.metadata.get(name)
         if entry and entry.value and entry.value != expected:
             findings.append(Finding("ERROR", entry.line, f"invalid {name.lower()}: {entry.value}"))
     if is_placeholder(text):
         findings.append(Finding("ERROR", 1, "unresolved template placeholder found"))
     return findings
+
+
+def validate_languages(document: Document) -> list[Finding]:
+    return [
+        Finding("ERROR", entry.line, f"invalid language level: {entry.value}")
+        for entry in document.languages.values()
+        if entry.value not in LANGUAGE_LEVELS
+    ]
 
 
 def validate_record_shape(record: Record) -> list[Finding]:
@@ -132,6 +139,7 @@ def validate(path: Path, require_complete: bool = False) -> list[Finding]:
     findings = [Finding("ERROR", issue.line, issue.message) for issue in document.issues]
     findings.extend(Finding("ERROR", issue.line, issue.message) for issue in unknown_section_fields(document))
     findings.extend(validate_metadata(document, text))
+    findings.extend(validate_languages(document))
     all_ids: dict[str, Record] = {}
     for record in document.records:
         findings.extend(validate_record_shape(record))
@@ -159,7 +167,7 @@ def validate(path: Path, require_complete: bool = False) -> list[Finding]:
             verification = record.fields.get("Verification")
             evidence = record.fields.get("Evidence")
             word_count = sum(len(entry.value.split()) for entry in record.fields.values())
-            if word_count > 130:
+            if word_count > ACHIEVEMENT_WORD_LIMIT:
                 findings.append(Finding("WARNING", record.line, f"achievement '{record.title}' is {word_count} words"))
             if verification and verification.value == "Verified" and outcome and re.search(r"\d", outcome.value):
                 if not evidence or evidence.value in {"", "Not documented"}:
@@ -168,6 +176,13 @@ def validate(path: Path, require_complete: bool = False) -> list[Finding]:
                 findings.append(Finding("WARNING", record.line, f"achievement '{record.title}' is {verification.value.lower()}"))
             if outcome and outcome.value in {"", "Not documented", "Unknown"}:
                 findings.append(Finding("WARNING", outcome.line, f"achievement '{record.title}' has no documented outcome"))
+        elif record.kind == "role":
+            scope = record.fields.get("Scope")
+            if scope and len(scope.value.split()) > ROLE_SCOPE_WORD_LIMIT:
+                findings.append(Finding(
+                    "WARNING", scope.line,
+                    f"role '{record.title}' scope exceeds {ROLE_SCOPE_WORD_LIMIT} words",
+                ))
         elif record.kind == "skill":
             evidence = record.fields.get("Evidence")
             if not evidence or not split_references(evidence.value):

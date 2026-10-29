@@ -65,7 +65,7 @@ cd career-ledger
 > [!CAUTION]
 > Career records may contain personal information. Check your repository's visibility before committing real career data.
 
-Python 3.10 or newer is required. Install [`uv`](https://docs.astral.sh/uv/) when you want PDF export; the core inspection and validation tools use the Python standard library.
+Python 3.10 or newer and [`uv`](https://docs.astral.sh/uv/) are required. Commands install their isolated dependencies on demand.
 
 ### 2. Build your career ledger
 
@@ -80,13 +80,13 @@ Choose either an existing resume import or a guided interview. The workflow crea
 ### 3. Validate the evidence
 
 ```bash
-python3 scripts/validate_career.py docs/career.md
+make validate
 ```
 
 Before generating a resume, require the minimum complete dataset:
 
 ```bash
-python3 scripts/validate_career.py docs/career.md --require-complete
+make validate-complete
 ```
 
 ### 4. Generate a resume
@@ -123,7 +123,7 @@ The schema supports `Verified`, `Estimated`, and `Unverified` claims; contributi
 Inspect whether the career database is missing, empty, or populated:
 
 ```bash
-python3 scripts/inspect_state.py docs/career.md
+make inspect
 ```
 
 Validate the database:
@@ -153,7 +153,7 @@ make check
 Treat warnings as failures in stricter automation:
 
 ```bash
-python3 scripts/validate_career.py docs/career.md --warnings-as-errors
+make validate-strict
 ```
 
 ## Designed for trustworthy applications
