@@ -14,21 +14,20 @@ Reconcile imports against existing facts. Do not duplicate matches, persist sour
 
 ## Structure the database
 
-Keep schema-required root keys; `education`, `employment`, and `projects` may be empty. Sort known employment dates newest first. Store projects only at root; link them through unique IDs in optional `employmentId`. Project weights are independent integers from 1–10.
+Follow `schema.yaml` for structure and field semantics.
 
 ## Interview factual gaps
 
 Ask the highest-value unanswered question, then recompute. Do not ask for known facts or suggest biographical answers. For projects, probe situation, task, action, result, skills, and relevance; STAR fields are limited to 100 characters.
 
-Close answers marked unknown, approximate, private, skipped, out of scope, or finished. Record only material unresolved gaps in top-level `notes`.
+Close answers marked unknown, approximate, private, skipped, out of scope, or finished.
 
 ## Classify and preserve facts
 
 - Keep approximations approximate and prefer qualitative results to invented metrics.
 - Exclude confidential or employer-sensitive material.
 - Match by stable ID first, then organization, role, subject, and dates.
-- Reuse skill IDs while keeping each project's name, keywords, and proficiency local.
-- Exclude `private: true` records from application materials.
+- Reuse stable IDs when facts match.
 
 ## Write safely
 

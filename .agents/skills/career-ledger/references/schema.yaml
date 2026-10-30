@@ -1,7 +1,7 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://career-ledger.local/schema.yaml
 title: Profile
-description: YAML representation of the career profile model.
+description: Canonical YAML career profile. Field descriptions are the source of truth for modeling conventions.
 type: object
 additionalProperties: false
 required:
@@ -26,19 +26,19 @@ properties:
     type: array
     default: []
     uniqueItems: true
-    description: Employment history; may be empty for students or people without work experience.
+    description: Employment history, ordered by known start date newest first; may be empty.
     items:
       $ref: "#/$defs/Employment"
   projects:
     type: array
     default: []
     uniqueItems: true
-    description: Projects, publications, achievements, and recurring work, optionally linked to an employment record.
+    description: Root-level projects, publications, achievements, and recurring work, optionally linked through employmentId.
     items:
       $ref: "#/$defs/Project"
   notes:
     type: array
-    description: Optional free-form notes for career breaks and other information not represented elsewhere.
+    description: Optional concise notes for material unresolved gaps, career breaks, or facts not represented elsewhere; remove resolved gaps.
     items:
       type: string
 
@@ -125,7 +125,7 @@ $defs:
       private:
         type: boolean
         default: false
-        description: Whether this education record is private and should not be disclosed.
+        description: Mark true only when the education record is undisclosable; exclude it from application materials.
       city:
         $ref: "#/$defs/City"
       type:
@@ -334,7 +334,7 @@ $defs:
       private:
         type: boolean
         default: false
-        description: Whether this skill usage is private and should not be disclosed.
+        description: Mark true only when this skill usage is undisclosable; exclude it from application materials.
       id:
         type: string
         pattern: "^skill-[a-z0-9]+(?:-[a-z0-9]+)*$"
@@ -373,7 +373,7 @@ $defs:
       private:
         type: boolean
         default: false
-        description: Whether this employment record is private and should not be disclosed.
+        description: Mark true only when the employment record is undisclosable; exclude it from application materials.
       id:
         type: string
         pattern: "^employment-[a-z0-9]+(?:-[a-z0-9]+)*$"
