@@ -1,26 +1,11 @@
 # Resume Review
 
-Run these checks against `data/profile.yaml` before delivering a resume. Fix every failure in the draft before presenting it.
+Fix every failure before delivery:
 
-## Integrity
-
-- Every employer, date, title, metric, technology, and scope claim traces to a record.
-- Verbs match the recorded action and job description. Use leadership verbs only when the underlying record supports leadership.
-- Approximate values read as approximate, and unresolved claims are not presented as confirmed facts.
-- No metric was added to make a bullet sound stronger. Accurate qualitative results stay qualitative.
-- Career-break dates are shown honestly, with accurate activities when relevant.
-
-## Disclosure
-
-- Education, employment, and skill usages marked `private: true` stay out of the resume.
-- No employer-sensitive detail appears, such as internal project names, unreleased products, internal metrics, customer data, or colleagues' personal details. Generalize it or omit it.
-
-## Tailoring
-
-- Keywords appear only where evidence supports them and read naturally in context.
-- No requirement-map gap is disguised as a strength.
-- Roles read as distinct rather than repeating the same claims.
-
-## Interview test
-
-- The candidate could explain every bullet in an interview with their own example and without overstating their part.
+- Trace every employer, date, title, metric, technology, and scope claim to `data/profile.yaml`.
+- Match verbs to recorded actions; use leadership language only when supported.
+- Keep approximations and qualitative results honest; add no metrics.
+- Show career breaks accurately.
+- Omit `private: true` and employer-sensitive details.
+- Use only supported keywords; expose gaps and avoid repeated claims.
+- Ensure the candidate could explain every bullet without overstating their role.

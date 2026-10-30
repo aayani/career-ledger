@@ -1,36 +1,23 @@
 ---
 name: career-ledger
-description: Create, update, reconcile, or audit the canonical career evidence database through guided interviews or source-document intake. Use for career timelines, career-history intake, evidence clarification, CV import as source material, or maintaining data/profile.yaml. Do not use to generate resumes, CVs, or cover letters as deliverables.
+description: Maintain data/profile.yaml from CV evidence, guided interviews, or targeted updates. Use for creating, reconciling, or auditing career facts; not resume or cover-letter deliverables.
 user-invocable: true
 disable-model-invocation: false
 ---
 
 # Career Ledger
 
-### Outputs
+Maintain `data/profile.yaml` as the neutral source of truth. Accept CV/resume evidence, guided interviews, or targeted updates.
 
-- Maintain `data/profile.yaml` as a neutral evidence-aware source of truth.
-
-### Inputs
-
-- Existing CV/resume as evidence; do not invoke `resume-cover-letter`.
-- Guided interview to build a profile.
-- Section update in existing `data/profile.yaml`.
-
-## Route the session
-
-From the repository root, read [workflow.md](references/workflow.md), inspect `data/profile.yaml`, and follow only the applicable route.
-
-Before creating the database or changing its structure, read [schema.yaml](references/schema.yaml) and inspect `tests/fixtures/profile-valid.yaml`. The JSON Schema expressed in YAML is authoritative. The scripts load and enforce it directly.
+Read [workflow.md](references/workflow.md), then run `make inspect`. Before creating or restructuring the profile, read the authoritative [schema.yaml](references/schema.yaml) and `tests/fixtures/profile-valid.yaml`.
 
 ## Invariants
 
-- Treat the repository's `scripts/` directory as read-only during career-ledger data work. Existing scripts may be inspected or executed, but never create, edit, delete, rename, move, or format files under `scripts/`.
+- Treat `scripts/` as read-only during profile work.
 - Never invent or strengthen career facts.
-- During guided intake, ask exactly one question per turn. Never bundle multiple questions into one sentence, list, or prompt.
-- Preserve stable employment and skill IDs, unrelated records, and concurrent user changes according to the workflow.
-- Model skills as groups: `name` identifies the capability area and `keywords` lists its tools, frameworks, methods, and technologies.
+- Ask one factual question per turn, save each confirmed answer promptly, and stop when the user pauses.
+- Preserve stable IDs, unrelated records, privacy flags, and concurrent edits.
+- Model skills as groups: `name` is the capability; `keywords` are its tools, frameworks, methods, and technologies.
 - A repeated skill ID may carry different names, keywords, or proficiency values across project usages as the skill evolves.
-- Use `private: true` only for education, employment, or skill usages that must not be disclosed.
-- Store material unresolved gaps as concise top-level `notes`, not speculation or hidden session state.
-- Stop immediately when the user pauses or finishes. Save only confirmed work and report validation honestly.
+- Use `private: true` only for undisclosable education, employment, or skill usages.
+- Store material unresolved gaps as concise top-level `notes`; report validation honestly.

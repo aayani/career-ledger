@@ -42,20 +42,6 @@ def _json_path(parts: Iterable[object]) -> str:
     return path
 
 
-def _skill_usage_count(document: dict[str, object]) -> int:
-    count = 0
-    projects = document.get("projects", [])
-    if not isinstance(projects, list):
-        return 0
-    for project in projects:
-        if not isinstance(project, dict):
-            continue
-        skills = project.get("skills", [])
-        if isinstance(skills, list):
-            count += len(skills)
-    return count
-
-
 def _employment_reference_findings(document: dict[str, object]) -> list[Finding]:
     employment = document.get("employment", [])
     projects = document.get("projects", [])
@@ -90,6 +76,29 @@ def _employment_reference_findings(document: dict[str, object]) -> list[Finding]
     return findings
 
 
+def _duplicate_record_id_findings(document: dict[str, object]) -> list[Finding]:
+    findings = []
+    for collection, label in (("education", "education"), ("projects", "project")):
+        records = document.get(collection, [])
+        if not isinstance(records, list):
+            continue
+        seen = set()
+        for index, record in enumerate(records):
+            if not isinstance(record, dict) or not isinstance(record.get("id"), str):
+                continue
+            record_id = record["id"]
+            if record_id in seen:
+                findings.append(
+                    Finding(
+                        "ERROR",
+                        f"$.{collection}[{index}].id",
+                        f"duplicate {label} id {record_id!r}",
+                    )
+                )
+            seen.add(record_id)
+    return findings
+
+
 def validate_profile(path: Path, require_complete: bool = False) -> list[Finding]:
     """Return schema and completeness findings for a profile YAML file."""
     try:
@@ -102,13 +111,21 @@ def validate_profile(path: Path, require_complete: bool = False) -> list[Finding
         for error in PROFILE_VALIDATOR.iter_errors(document)
     ]
     findings.extend(_employment_reference_findings(document))
+    findings.extend(_duplicate_record_id_findings(document))
 
     if require_complete:
-        employment = document.get("employment")
-        if not isinstance(employment, list) or not employment:
-            findings.append(Finding("ERROR", "$.employment", "no employment records found"))
-        if _skill_usage_count(document) == 0:
-            findings.append(Finding("ERROR", "$.projects", "no skill usages found"))
+        has_content = any(
+            isinstance(document.get(key), list) and bool(document[key])
+            for key in ("education", "employment", "projects")
+        )
+        if not has_content:
+            findings.append(
+                Finding(
+                    "ERROR",
+                    "$",
+                    "no education, employment, or project records found",
+                )
+            )
 
     unique = {(item.level, item.path, item.message): item for item in findings}
     return sorted(unique.values(), key=lambda item: (item.path, item.level, item.message))

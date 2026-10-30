@@ -15,7 +15,8 @@ location:
     country: Sweden
 
 education:
-  - city:
+  - id: education-example-university-phd-computational-biology-2021
+    city:
       name: Uppsala
       country: Sweden
     type: degree
@@ -38,7 +39,8 @@ employment:
     endDate: present
 
 projects:
-  - employmentId:
+  - id: project-genomic-data-analysis
+    employmentId:
       - employment-example-university-phd-researcher-2021
     name: Genomic data analysis
     description: Investigated machine-learning methods for analysing genomic data.
@@ -56,7 +58,8 @@ projects:
           - Experimental design
         proficiency: advanced
     weightage: 9
-  - employmentId:
+  - id: project-published-research-paper
+    employmentId:
       - employment-example-university-phd-researcher-2021
     name: Published research paper
     description: Prepared a manuscript on interpretable machine learning for genomic variant classification.

@@ -25,7 +25,7 @@ Use it to:
 
 ### One dependable career record
 
-Maintain a canonical YAML database at `data/profile.yaml`. Stable employment and skill IDs keep the history consistent as wording and skill usage evolve. Projects live in a separate root array and can optionally link to one or more employment records through an ID array.
+Maintain a canonical YAML database at `data/profile.yaml`. Stable education, employment, project, and skill IDs keep the history consistent as wording and skill usage evolve. Projects live in a separate root array and can optionally link to one or more employment records through an ID array.
 
 ### Evidence-aware by design
 
@@ -135,7 +135,7 @@ Validate the database:
 make validate
 ```
 
-Require roles and skills for downstream resume work:
+Require at least one education, employment, or project record for resume work:
 
 ```bash
 make validate-complete

@@ -59,6 +59,42 @@ class ProfileValidationTests(unittest.TestCase):
         self.assertTrue(any("does not match" in message for message in messages))
         self.assertTrue(any("is not one of" in message for message in messages))
 
+    def test_education_and_project_ids_are_required_valid_and_unique(self):
+        for collection in ("education", "projects"):
+            with self.subTest(collection=collection, condition="required"):
+                missing = deepcopy(VALID_PROFILE)
+                missing[collection][0].pop("id")
+                self.assertTrue(
+                    any(
+                        "'id' is a required property" in message
+                        for message in self.errors(missing)
+                    )
+                )
+
+            with self.subTest(collection=collection, condition="pattern"):
+                invalid = deepcopy(VALID_PROFILE)
+                invalid[collection][0]["id"] = "bad id"
+                self.assertTrue(
+                    any(
+                        "does not match" in message
+                        for message in self.errors(invalid)
+                    )
+                )
+
+            with self.subTest(collection=collection, condition="unique"):
+                duplicate = deepcopy(VALID_PROFILE)
+                repeated = deepcopy(duplicate[collection][0])
+                if collection == "education":
+                    repeated["institution"] = "Another University"
+                else:
+                    repeated["name"] = "Another project"
+                duplicate[collection].append(repeated)
+                label = "education" if collection == "education" else "project"
+                self.assertIn(
+                    f"duplicate {label} id {repeated['id']!r}",
+                    self.errors(duplicate),
+                )
+
     def test_weightage_is_required_integer_from_one_to_ten(self):
         for value in (0, 4.5, 11):
             with self.subTest(value=value):
@@ -143,6 +179,7 @@ class ProfileValidationTests(unittest.TestCase):
 
     def test_education_fields_follow_type(self):
         base = {
+            "id": "education-example-certification-2025",
             "city": {"name": "Online", "country": "Online"},
             "type": "certification",
             "startDate": "2025-01",
@@ -241,14 +278,26 @@ projects: []
         findings = self.validate_text("- not\n- a\n- mapping\n")
         self.assertTrue(any("must be a YAML mapping" in item.message for item in findings))
 
-    def test_partial_database_is_valid_but_not_complete(self):
-        partial = deepcopy(VALID_PROFILE)
-        partial["employment"] = []
-        partial["projects"] = []
-        self.assertEqual([], self.errors(partial))
-        messages = self.errors(partial, require_complete=True)
-        self.assertIn("no employment records found", messages)
-        self.assertIn("no skill usages found", messages)
+    def test_complete_profile_requires_any_substantive_record(self):
+        for retained in ("education", "employment", "projects"):
+            with self.subTest(retained=retained):
+                partial = deepcopy(VALID_PROFILE)
+                for key in ("education", "employment", "projects"):
+                    if key != retained:
+                        partial[key] = []
+                if retained == "projects":
+                    for project in partial["projects"]:
+                        project.pop("employmentId", None)
+                self.assertEqual([], self.errors(partial, require_complete=True))
+
+        empty = deepcopy(VALID_PROFILE)
+        empty["education"] = []
+        empty["employment"] = []
+        empty["projects"] = []
+        self.assertIn(
+            "no education, employment, or project records found",
+            self.errors(empty, require_complete=True),
+        )
 
     def test_schema_is_loaded_from_schema_yaml(self):
         self.assertEqual("schema.yaml", PROFILE_SCHEMA_PATH.name)
