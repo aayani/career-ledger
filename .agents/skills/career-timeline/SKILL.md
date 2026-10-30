@@ -21,7 +21,8 @@ Before creating the database or changing its structure, read [schema.yaml](refer
 - Never invent or strengthen career facts.
 - During guided intake, ask exactly one question per turn. Never bundle multiple questions into one sentence, list, or prompt.
 - Preserve stable employment and skill IDs, unrelated records, and concurrent user changes according to the workflow.
-- A repeated skill ID may carry different names or proficiency values across project usages as the skill evolves.
+- Model skills as groups: `name` identifies the capability area and `keywords` lists its tools, frameworks, methods, and technologies.
+- A repeated skill ID may carry different names, keywords, or proficiency values across project usages as the skill evolves.
 - Use `private: true` only for education, employment, or skill usages that must not be disclosed.
 - Store material unresolved gaps as concise top-level `notes`, not speculation or hidden session state.
 - Stop immediately when the user pauses or finishes. Save only confirmed work and report validation honestly.

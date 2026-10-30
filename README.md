@@ -25,11 +25,11 @@ Use it to:
 
 ### One dependable career record
 
-Maintain a canonical YAML database at `career.yaml`. Stable employment and skill IDs keep the history consistent as wording and skill usage evolve.
+Maintain a canonical YAML database at `career.yaml`. Stable employment and skill IDs keep the history consistent as wording and skill usage evolve. Projects live in a separate root array and can optionally link to one or more employment records through an ID array.
 
 ### Evidence-aware by design
 
-Work items can record personal contribution, outcome, and a safe evidence note. Education, employment, and skill usages can be marked private, and honest qualitative results are preferred over invented metrics.
+Projects use concise situation, task, action, and result fields of up to 100 characters each. Education, employment, and skill usages can be marked private, and honest qualitative results are preferred over invented metrics.
 
 ### Built for practical AI collaboration
 
@@ -37,7 +37,7 @@ Portable Agent Skills guide career intake and resume creation. Repository instru
 
 ### Quality gates included
 
-The validator loads `schema.yaml` as JSON Schema Draft 2020-12 and checks required fields, formats, IDs, controlled values, conditional education fields, privacy flags, and exact duplicates before career data reaches a resume.
+The validator loads `schema.yaml` as JSON Schema Draft 2020-12 and checks required fields, formats, IDs, project employment links, controlled values, conditional education fields, privacy flags, and exact duplicates before career data reaches a resume.
 
 The canonical schema lives at `.agents/skills/career-timeline/references/schema.yaml`.
 
@@ -112,13 +112,14 @@ The PDF is written to `output/backend.pdf`. Pass `--output` directly to `scripts
 ## What the ledger captures
 
 - Identity, contact details, and current location
-- Employers, roles, descriptions, projects, contributions, and outcomes
+- Employers and roles, plus separately stored projects with optional employment links
+- Project descriptions and situation, task, action, and result narratives
 - Education, courses, certifications, and licences
-- Languages and evolving skill usages
-- Privacy flags and safe evidence notes
+- Languages and evolving skill groups with tool and framework keywords
+- Privacy flags for education, employment, and skill usages
 - Free-form notes for career breaks and unresolved context
 
-Project relevance is an independent integer score from 1 to 10. Skill IDs remain stable while names and optional proficiency can vary by project usage.
+Project relevance is an independent integer score from 1 to 10. Skill-group IDs remain stable while names, keywords, and optional proficiency can vary by project usage.
 
 ## Commands
 

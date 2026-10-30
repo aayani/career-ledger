@@ -27,14 +27,14 @@ When the scope supplies a role but no vacancy, offer to either use the role fami
 
 - **Follow the reader's skim order.** Give the most detail to the current role and the previous one or two roles, unless an older record is the strongest evidence for the target. Keep the summary short and positioning-focused. Treat `Skills` as a searchable filter list, not a showcase.
 - **Give each role a distinct purpose.** Before selecting bullets, privately complete "This role demonstrates the ability to..." for each role. Choose achievements that support that purpose and avoid repeating the same kind of claim across roles.
-- **Curate skills by evidence.** List only skills supported by their project usage. Prefer specific skills over generic ones, favour recent use, and omit skills that were only incidental to the target.
+- **Curate skills by evidence.** List only skill groups and keywords supported by their project usage. Prefer specific keywords over generic ones, favour recent use, and omit tools or frameworks that were only incidental to the target.
 - **Keep identity facts consistent.** Use the employers, titles, and dates exactly as recorded so the resume matches LinkedIn and other application material generated from the same database.
 
 ## Output structure
 
 The following repository rules override the writer's generic section order:
 
-- Place `Personal Projects` after `Experience` only when at least one supported project strengthens the target, then place `Skills`.
+- Associate projects in `employmentId` with their matching experiences without duplicating the same claim. Place independent projects under `Personal Projects` after `Experience` only when at least one strengthens the target, then place `Skills`.
 - Include at most five projects, chosen for relevance, evidence, recency, and distinctiveness.
-- Describe each project's purpose, personal contribution, relevant technology, and outcome without inventing facts.
+- Use each project's recorded situation, task, action, and result to describe its purpose, personal contribution, relevant technology, and result without inventing facts.
 - Reconcile project technologies into `Skills`, remove unsupported or redundant entries, and keep terminology consistent.

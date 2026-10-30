@@ -1,36 +1,76 @@
 person:
   name:
     first: Example
-    last: Person
+    last: Researcher
   contact:
     phone: "+46701234567"
-    email: example@example.com
+    email: researcher@example.com
   languages:
     - name: English
       proficiency: professional
 
 location:
   city:
-    name: Stockholm
+    name: Uppsala
     country: Sweden
 
-education: []
+education:
+  - city:
+      name: Uppsala
+      country: Sweden
+    type: degree
+    degree: PhD
+    institution: Example University
+    fieldOfStudy: Computational Biology
+    startDate: "2021-09"
 
 employment:
-  - id: employment-example-engineer-2024
-    jobTitle: Engineer
+  - id: employment-example-university-phd-researcher-2021
+    jobTitle: PhD Researcher
     company:
-      name: Example Ltd
-    type: permanent
-    projects:
-      - name: Customer API
-        description: Built and maintained customer-facing services.
-        outcome: Improved service reliability.
-        evidence: Confirmed by the candidate.
-        skills:
-          - id: skill-python
-            name: Python
-            proficiency: advanced
-        weightage: 8
-    startDate: "2024-01"
+      name: Example University
+      location:
+        city:
+          name: Uppsala
+          country: Sweden
+    type: temporary
+    startDate: "2021-09"
     endDate: present
+
+projects:
+  - employmentId:
+      - employment-example-university-phd-researcher-2021
+    name: Genomic data analysis
+    description: Investigated machine-learning methods for analysing genomic data.
+    situation: Genomic datasets required reproducible evaluation of machine-learning methods.
+    task: Investigate suitable methods and interpret the findings.
+    action: Designed experiments, built reproducible analysis pipelines, and analysed the data.
+    result: Produced reproducible findings for peer-reviewed dissemination.
+    skills:
+      - id: skill-research-data-analysis
+        name: Research and data analysis
+        keywords:
+          - Python
+          - pandas
+          - scikit-learn
+          - Experimental design
+        proficiency: advanced
+    weightage: 9
+  - employmentId:
+      - employment-example-university-phd-researcher-2021
+    name: Published research paper
+    description: Prepared a manuscript on interpretable machine learning for genomic variant classification.
+    situation: The research findings were ready for peer-reviewed publication.
+    task: Prepare a manuscript on interpretable machine learning for genomic variant classification.
+    action: Led the analysis, created the figures, and wrote the methods and results sections.
+    result: Published the fictional paper "Interpretable Machine Learning for Genomic Variant Classification".
+    skills:
+      - id: skill-scientific-communication
+        name: Scientific communication
+        keywords:
+          - Academic writing
+          - Data visualisation
+          - LaTeX
+          - Peer review
+        proficiency: advanced
+    weightage: 8

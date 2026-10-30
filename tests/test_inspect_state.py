@@ -21,7 +21,11 @@ class InspectStateTests(unittest.TestCase):
         self.assertEqual(0, result["record_count"])
 
     def test_blank_and_empty_mapping_are_empty(self):
-        for text in ("", "{}\n", "notes: []\neducation: []\nemployment: []\n"):
+        for text in (
+            "",
+            "{}\n",
+            "notes: []\neducation: []\nemployment: []\nprojects: []\n",
+        ):
             with self.subTest(text=text):
                 result = self.inspect_text(text)
                 self.assertEqual("empty", result["content_state"])
@@ -38,11 +42,11 @@ class InspectStateTests(unittest.TestCase):
         data["notes"] = ["Confirm dates."]
         result = self.inspect_text(yaml.safe_dump(data, sort_keys=False))
         self.assertEqual("populated", result["content_state"])
-        self.assertEqual(1, result["record_count"])
+        self.assertEqual(2, result["record_count"])
         self.assertEqual(1, result["employment_count"])
-        self.assertEqual(0, result["education_count"])
-        self.assertEqual(1, result["project_count"])
-        self.assertEqual(1, result["skill_usage_count"])
+        self.assertEqual(1, result["education_count"])
+        self.assertEqual(2, result["project_count"])
+        self.assertEqual(2, result["skill_usage_count"])
         self.assertEqual(1, result["private_record_count"])
         self.assertEqual(1, result["note_count"])
 
@@ -52,7 +56,9 @@ class InspectStateTests(unittest.TestCase):
         self.assertIn("invalid career YAML", result["error"])
 
     def test_invalid_collection_shapes_do_not_crash_inspection(self):
-        result = self.inspect_text("employment: not-a-list\neducation: {}\nnotes: 3\n")
+        result = self.inspect_text(
+            "employment: not-a-list\neducation: {}\nprojects: bad\nnotes: 3\n"
+        )
         self.assertEqual("invalid", result["content_state"])
         self.assertEqual(0, result["record_count"])
         self.assertGreater(result["validation_error_count"], 0)

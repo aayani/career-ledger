@@ -5,9 +5,9 @@ Run these checks against `career.yaml` before delivering a resume. Fix every fai
 ## Integrity
 
 - Every employer, date, title, metric, technology, and scope claim traces to a record.
-- Verbs match the recorded contribution and job description. Use leadership verbs only when the underlying record supports leadership.
+- Verbs match the recorded action and job description. Use leadership verbs only when the underlying record supports leadership.
 - Approximate values read as approximate, and unresolved claims are not presented as confirmed facts.
-- No metric was added to make a bullet sound stronger. Accurate qualitative outcomes stay qualitative.
+- No metric was added to make a bullet sound stronger. Accurate qualitative results stay qualitative.
 - Career-break dates are shown honestly, with accurate activities when relevant.
 
 ## Disclosure

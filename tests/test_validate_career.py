@@ -59,21 +59,56 @@ class CareerValidationTests(unittest.TestCase):
         for value in (0, 4.5, 11):
             with self.subTest(value=value):
                 invalid = deepcopy(VALID_DATABASE)
-                invalid["employment"][0]["projects"][0]["weightage"] = value
+                invalid["projects"][0]["weightage"] = value
                 self.assertNotEqual([], self.errors(invalid))
 
         missing = deepcopy(VALID_DATABASE)
-        missing["employment"][0]["projects"][0].pop("weightage")
+        missing["projects"][0].pop("weightage")
         self.assertTrue(any("weightage" in message for message in self.errors(missing)))
 
-    def test_unnamed_work_item_requires_description(self):
+    def test_unnamed_project_requires_description(self):
         valid = deepcopy(VALID_DATABASE)
-        valid["employment"][0]["projects"][0].pop("name")
+        valid["projects"][0].pop("name")
         self.assertEqual([], self.errors(valid))
 
         invalid = deepcopy(valid)
-        invalid["employment"][0]["projects"][0].pop("description")
+        invalid["projects"][0].pop("description")
         self.assertNotEqual([], self.errors(invalid))
+
+    def test_project_uses_star_fields(self):
+        for field in ("situation", "task", "action", "result"):
+            with self.subTest(field=field):
+                valid = deepcopy(VALID_DATABASE)
+                valid["projects"][0][field] = f"Example {field}."
+                self.assertEqual([], self.errors(valid))
+
+        for legacy_field in ("contribution", "outcome", "evidence"):
+            with self.subTest(legacy_field=legacy_field):
+                invalid = deepcopy(VALID_DATABASE)
+                invalid["projects"][0][legacy_field] = "Legacy value."
+                self.assertTrue(
+                    any(
+                        "Additional properties" in message
+                        for message in self.errors(invalid)
+                    )
+                )
+
+        blank = deepcopy(VALID_DATABASE)
+        blank["projects"][0]["action"] = "   "
+        self.assertTrue(any("does not match" in message for message in self.errors(blank)))
+
+        for field in ("situation", "task", "action", "result"):
+            with self.subTest(field=field, length=100):
+                boundary = deepcopy(VALID_DATABASE)
+                boundary["projects"][0][field] = "x" * 100
+                self.assertEqual([], self.errors(boundary))
+
+            with self.subTest(field=field, length=101):
+                too_long = deepcopy(VALID_DATABASE)
+                too_long["projects"][0][field] = "x" * 101
+                self.assertTrue(
+                    any("is too long" in message for message in self.errors(too_long))
+                )
 
     def test_exact_duplicate_arrays_are_rejected(self):
         cases = []
@@ -83,14 +118,12 @@ class CareerValidationTests(unittest.TestCase):
         cases.append(employment)
 
         project = deepcopy(VALID_DATABASE)
-        project["employment"][0]["projects"].append(
-            deepcopy(project["employment"][0]["projects"][0])
-        )
+        project["projects"].append(deepcopy(project["projects"][0]))
         cases.append(project)
 
         skill = deepcopy(VALID_DATABASE)
-        skill["employment"][0]["projects"][0]["skills"].append(
-            deepcopy(skill["employment"][0]["projects"][0]["skills"][0])
+        skill["projects"][0]["skills"].append(
+            deepcopy(skill["projects"][0]["skills"][0])
         )
         cases.append(skill)
 
@@ -127,12 +160,67 @@ class CareerValidationTests(unittest.TestCase):
     def test_private_is_optional_boolean(self):
         valid = deepcopy(VALID_DATABASE)
         valid["employment"][0]["private"] = True
-        valid["employment"][0]["projects"][0]["skills"][0]["private"] = True
+        valid["projects"][0]["skills"][0]["private"] = True
         self.assertEqual([], self.errors(valid))
 
         invalid = deepcopy(valid)
         invalid["employment"][0]["private"] = "yes"
         self.assertNotEqual([], self.errors(invalid))
+
+    def test_skill_group_requires_unique_nonblank_keywords(self):
+        missing = deepcopy(VALID_DATABASE)
+        missing["projects"][0]["skills"][0].pop("keywords")
+        self.assertTrue(any("keywords" in message for message in self.errors(missing)))
+
+        duplicate = deepcopy(VALID_DATABASE)
+        duplicate["projects"][0]["skills"][0]["keywords"] = [
+            "Python",
+            "Python",
+        ]
+        self.assertTrue(
+            any("non-unique" in message for message in self.errors(duplicate))
+        )
+
+        blank = deepcopy(VALID_DATABASE)
+        blank["projects"][0]["skills"][0]["keywords"] = ["   "]
+        self.assertTrue(any("does not match" in message for message in self.errors(blank)))
+
+    def test_project_employment_id_is_optional_and_validated(self):
+        independent = deepcopy(VALID_DATABASE)
+        independent["projects"][0].pop("employmentId")
+        self.assertEqual([], self.errors(independent))
+
+        invalid = deepcopy(VALID_DATABASE)
+        invalid["projects"][0]["employmentId"] = ["bad id"]
+        self.assertTrue(any("does not match" in message for message in self.errors(invalid)))
+
+        scalar = deepcopy(VALID_DATABASE)
+        scalar["projects"][0]["employmentId"] = "employment-example"
+        self.assertTrue(any("is not of type" in message for message in self.errors(scalar)))
+
+        duplicate = deepcopy(VALID_DATABASE)
+        duplicate["projects"][0]["employmentId"] *= 2
+        self.assertTrue(any("non-unique" in message for message in self.errors(duplicate)))
+
+        dangling = deepcopy(VALID_DATABASE)
+        dangling["projects"][0]["employmentId"] = ["employment-does-not-exist"]
+        self.assertIn(
+            "employmentId does not match any employment record",
+            self.errors(dangling),
+        )
+
+        multiple = deepcopy(VALID_DATABASE)
+        second_employment = deepcopy(multiple["employment"][0])
+        second_employment["id"] = "employment-example-university-research-assistant-2020"
+        multiple["employment"].append(second_employment)
+        multiple["projects"][0]["employmentId"].append(second_employment["id"])
+        self.assertEqual([], self.errors(multiple))
+
+        nested = deepcopy(VALID_DATABASE)
+        nested["employment"][0]["projects"] = [deepcopy(nested["projects"][0])]
+        self.assertTrue(
+            any("Additional properties" in message for message in self.errors(nested))
+        )
 
     def test_duplicate_yaml_key_is_an_error(self):
         text = """person: {}
@@ -140,6 +228,7 @@ person: {}
 location: {}
 education: []
 employment: []
+projects: []
 """
         findings = self.validate_text(text)
         self.assertTrue(any("duplicate key" in item.message for item in findings))
@@ -151,6 +240,7 @@ employment: []
     def test_partial_database_is_valid_but_not_complete(self):
         partial = deepcopy(VALID_DATABASE)
         partial["employment"] = []
+        partial["projects"] = []
         self.assertEqual([], self.errors(partial))
         messages = self.errors(partial, require_complete=True)
         self.assertIn("no employment records found", messages)

@@ -44,22 +44,50 @@ def _json_path(parts: Iterable[object]) -> str:
 
 def _skill_usage_count(document: dict[str, object]) -> int:
     count = 0
-    employment = document.get("employment", [])
-    if not isinstance(employment, list):
+    projects = document.get("projects", [])
+    if not isinstance(projects, list):
         return 0
-    for job in employment:
-        if not isinstance(job, dict):
+    for project in projects:
+        if not isinstance(project, dict):
             continue
-        projects = job.get("projects", [])
-        if not isinstance(projects, list):
-            continue
-        for project in projects:
-            if not isinstance(project, dict):
-                continue
-            skills = project.get("skills", [])
-            if isinstance(skills, list):
-                count += len(skills)
+        skills = project.get("skills", [])
+        if isinstance(skills, list):
+            count += len(skills)
     return count
+
+
+def _employment_reference_findings(document: dict[str, object]) -> list[Finding]:
+    employment = document.get("employment", [])
+    projects = document.get("projects", [])
+    if not isinstance(employment, list) or not isinstance(projects, list):
+        return []
+
+    employment_ids = {
+        job.get("id")
+        for job in employment
+        if isinstance(job, dict) and isinstance(job.get("id"), str)
+    }
+    findings = []
+    for index, project in enumerate(projects):
+        if not isinstance(project, dict):
+            continue
+        project_employment_ids = project.get("employmentId")
+        if not isinstance(project_employment_ids, list):
+            continue
+        for employment_index, employment_id in enumerate(project_employment_ids):
+            if (
+                isinstance(employment_id, str)
+                and re.fullmatch(r"employment-[a-z0-9]+(?:-[a-z0-9]+)*", employment_id)
+                and employment_id not in employment_ids
+            ):
+                findings.append(
+                    Finding(
+                        "ERROR",
+                        f"$.projects[{index}].employmentId[{employment_index}]",
+                        "employmentId does not match any employment record",
+                    )
+                )
+    return findings
 
 
 def validate(path: Path, require_complete: bool = False) -> list[Finding]:
@@ -73,13 +101,14 @@ def validate(path: Path, require_complete: bool = False) -> list[Finding]:
         Finding("ERROR", _json_path(error.absolute_path), error.message)
         for error in VALIDATOR.iter_errors(document)
     ]
+    findings.extend(_employment_reference_findings(document))
 
     if require_complete:
         employment = document.get("employment")
         if not isinstance(employment, list) or not employment:
             findings.append(Finding("ERROR", "$.employment", "no employment records found"))
         if _skill_usage_count(document) == 0:
-            findings.append(Finding("ERROR", "$.employment", "no skill usages found"))
+            findings.append(Finding("ERROR", "$.projects", "no skill usages found"))
 
     unique = {(item.level, item.path, item.message): item for item in findings}
     return sorted(unique.values(), key=lambda item: (item.path, item.level, item.message))

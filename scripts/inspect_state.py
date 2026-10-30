@@ -64,12 +64,8 @@ def inspect(path: Path) -> dict[str, object]:
 
     employment = _list(document.get("employment"))
     education = _list(document.get("education"))
+    projects = _list(document.get("projects"))
     notes = _list(document.get("notes"))
-    projects = [
-        project
-        for job in employment if isinstance(job, dict)
-        for project in _list(job.get("projects"))
-    ]
     skill_usages = [
         skill
         for project in projects if isinstance(project, dict)
