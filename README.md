@@ -39,7 +39,7 @@ Portable Agent Skills guide career intake and resume creation. Repository instru
 
 The validator loads `schema.yaml` as JSON Schema Draft 2020-12 and checks required fields, formats, IDs, project employment links, controlled values, conditional education fields, privacy flags, and exact duplicates before career data reaches a resume.
 
-The canonical schema lives at `.agents/skills/career-timeline/references/schema.yaml`.
+The canonical schema lives at `.agents/skills/career-ledger/references/schema.yaml`.
 
 ### Application-ready outputs
 

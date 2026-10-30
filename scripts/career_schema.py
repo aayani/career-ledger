@@ -10,7 +10,7 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parent.parent
-SCHEMA_PATH = ROOT / ".agents" / "skills" / "career-timeline" / "references" / "schema.yaml"
+SCHEMA_PATH = ROOT / ".agents" / "skills" / "career-ledger" / "references" / "schema.yaml"
 
 
 def load_schema(path: Path = SCHEMA_PATH) -> dict[str, Any]:

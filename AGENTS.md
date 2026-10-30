@@ -23,7 +23,7 @@ Do not modify third-party or vendored skills unless the user explicitly asks to 
 
 #### Custom Skills
 
-- `career-timeline`
+- `career-ledger`
 - `resume-router`
 
 #### Third-Party Skills

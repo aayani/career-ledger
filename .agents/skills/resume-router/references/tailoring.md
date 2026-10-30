@@ -19,7 +19,7 @@ Build this map for **particular position** from the vacancy, and for **specific 
    - **Unclear:** the source does not define it well enough to map.
 3. Separate a missing keyword from a missing capability. When evidence exists under different wording, use the source's term only where it truthfully describes that evidence. Never add a keyword without a supporting record.
 4. Select at most five priorities to lead the summary, the most recent roles, and `Skills`.
-5. Report genuine gaps to the user instead of covering them. When the user may hold an unrecorded fact that would close a gap, offer to record it through `career-timeline` before drafting.
+5. Report genuine gaps to the user instead of covering them. When the user may hold an unrecorded fact that would close a gap, offer to record it through `career-ledger` before drafting.
 
 When the scope supplies a role but no vacancy, offer to either use the role family's common expectations or let the user provide a representative listing. Label role-family expectations as assumptions, and do not invent a company.
 
