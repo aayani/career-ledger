@@ -85,12 +85,6 @@ Choose either an existing resume import or a guided interview. The workflow crea
 make validate
 ```
 
-Before generating a resume, require the minimum complete dataset:
-
-```bash
-make validate-complete
-```
-
 ### 4. Generate a resume
 
 Ask your agent to generate a resume. Career Ledger routes the request to one of three scopes:
@@ -133,12 +127,6 @@ Validate the database:
 
 ```bash
 make validate
-```
-
-Require at least one education, employment, or project record for resume work:
-
-```bash
-make validate-complete
 ```
 
 Run the test suite:

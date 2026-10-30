@@ -1,7 +1,10 @@
 from copy import deepcopy
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 
 import yaml
 
@@ -10,7 +13,7 @@ from scripts.profile_schema import (
     PROFILE_SCHEMA_PATH,
     load_profile_schema,
 )
-from scripts.validate_profile import validate_profile
+from scripts.validate_profile import main, validate_profile
 
 
 VALID_PROFILE = yaml.safe_load(
@@ -19,27 +22,34 @@ VALID_PROFILE = yaml.safe_load(
 
 
 class ProfileValidationTests(unittest.TestCase):
-    def validate_data(self, data, require_complete: bool = False):
-        return self.validate_text(
-            yaml.safe_dump(data, sort_keys=False),
-            require_complete=require_complete,
-        )
+    def validate_data(self, data):
+        return self.validate_text(yaml.safe_dump(data, sort_keys=False))
 
-    def validate_text(self, text: str, require_complete: bool = False):
+    def validate_text(self, text: str):
         with TemporaryDirectory() as directory:
             path = Path(directory) / "profile.yaml"
             path.write_text(text, encoding="utf-8")
-            return validate_profile(path, require_complete=require_complete)
+            return validate_profile(path)
 
-    def errors(self, data, require_complete: bool = False):
+    def errors(self, data):
         return [
             item.message
-            for item in self.validate_data(data, require_complete=require_complete)
+            for item in self.validate_data(data)
             if item.level == "ERROR"
         ]
 
     def test_valid_database_has_no_findings(self):
         self.assertEqual([], self.validate_data(VALID_PROFILE))
+
+    def test_cli_skips_missing_profile(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "profile.yaml"
+            output = StringIO()
+            with patch("sys.argv", ["validate_profile.py", str(path)]):
+                with redirect_stdout(output):
+                    result = main()
+        self.assertEqual(0, result)
+        self.assertIn("Validation skipped", output.getvalue())
 
     def test_required_fields_and_unknown_fields_are_enforced(self):
         missing = deepcopy(VALID_PROFILE)
@@ -59,7 +69,7 @@ class ProfileValidationTests(unittest.TestCase):
         self.assertTrue(any("does not match" in message for message in messages))
         self.assertTrue(any("is not one of" in message for message in messages))
 
-    def test_education_and_project_ids_are_required_valid_and_unique(self):
+    def test_education_and_project_ids_are_required_and_valid(self):
         for collection in ("education", "projects"):
             with self.subTest(collection=collection, condition="required"):
                 missing = deepcopy(VALID_PROFILE)
@@ -81,7 +91,7 @@ class ProfileValidationTests(unittest.TestCase):
                     )
                 )
 
-            with self.subTest(collection=collection, condition="unique"):
+            with self.subTest(collection=collection, condition="duplicate-id"):
                 duplicate = deepcopy(VALID_PROFILE)
                 repeated = deepcopy(duplicate[collection][0])
                 if collection == "education":
@@ -89,11 +99,7 @@ class ProfileValidationTests(unittest.TestCase):
                 else:
                     repeated["name"] = "Another project"
                 duplicate[collection].append(repeated)
-                label = "education" if collection == "education" else "project"
-                self.assertIn(
-                    f"duplicate {label} id {repeated['id']!r}",
-                    self.errors(duplicate),
-                )
+                self.assertEqual([], self.errors(duplicate))
 
     def test_weightage_is_required_integer_from_one_to_ten(self):
         for value in (0, 4.5, 11):
@@ -226,14 +232,16 @@ class ProfileValidationTests(unittest.TestCase):
         blank["projects"][0]["skills"][0]["keywords"] = ["   "]
         self.assertTrue(any("does not match" in message for message in self.errors(blank)))
 
-    def test_project_employment_id_is_optional_and_validated(self):
+    def test_project_employment_id_is_optional_and_schema_validated(self):
         independent = deepcopy(VALID_PROFILE)
         independent["projects"][0].pop("employmentId")
         self.assertEqual([], self.errors(independent))
 
         invalid = deepcopy(VALID_PROFILE)
         invalid["projects"][0]["employmentId"] = ["bad id"]
-        self.assertTrue(any("does not match" in message for message in self.errors(invalid)))
+        self.assertTrue(
+            any("does not match" in message for message in self.errors(invalid))
+        )
 
         scalar = deepcopy(VALID_PROFILE)
         scalar["projects"][0]["employmentId"] = "employment-example"
@@ -245,10 +253,7 @@ class ProfileValidationTests(unittest.TestCase):
 
         dangling = deepcopy(VALID_PROFILE)
         dangling["projects"][0]["employmentId"] = ["employment-does-not-exist"]
-        self.assertIn(
-            "employmentId does not match any employment record",
-            self.errors(dangling),
-        )
+        self.assertEqual([], self.errors(dangling))
 
         multiple = deepcopy(VALID_PROFILE)
         second_employment = deepcopy(multiple["employment"][0])
@@ -278,26 +283,12 @@ projects: []
         findings = self.validate_text("- not\n- a\n- mapping\n")
         self.assertTrue(any("must be a YAML mapping" in item.message for item in findings))
 
-    def test_complete_profile_requires_any_substantive_record(self):
-        for retained in ("education", "employment", "projects"):
-            with self.subTest(retained=retained):
-                partial = deepcopy(VALID_PROFILE)
-                for key in ("education", "employment", "projects"):
-                    if key != retained:
-                        partial[key] = []
-                if retained == "projects":
-                    for project in partial["projects"]:
-                        project.pop("employmentId", None)
-                self.assertEqual([], self.errors(partial, require_complete=True))
-
+    def test_empty_record_collections_are_valid(self):
         empty = deepcopy(VALID_PROFILE)
         empty["education"] = []
         empty["employment"] = []
         empty["projects"] = []
-        self.assertIn(
-            "no education, employment, or project records found",
-            self.errors(empty, require_complete=True),
-        )
+        self.assertEqual([], self.errors(empty))
 
     def test_schema_is_loaded_from_schema_yaml(self):
         self.assertEqual("schema.yaml", PROFILE_SCHEMA_PATH.name)

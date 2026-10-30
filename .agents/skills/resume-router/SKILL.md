@@ -25,7 +25,7 @@ Gather only the vacancy for **particular position** or role name for **specific 
 
 ## Use repository evidence first
 
-Read `data/profile.yaml`, run `make validate-complete`, and inspect relevant files in `docs/resume/`. Resolve errors and ask only for missing material facts or preferences. Infer the market; ask only when regional convention matters.
+Read `data/profile.yaml`, run `make validate`, and inspect relevant files in `docs/resume/`. Resolve errors and ask only for missing material facts or preferences. Infer the market; ask only when regional convention matters.
 
 ## Shape the target before drafting
 

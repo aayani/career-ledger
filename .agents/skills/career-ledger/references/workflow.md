@@ -14,7 +14,7 @@ Reconcile imports against existing facts. Do not duplicate matches, persist sour
 
 ## Structure the database
 
-Keep schema-required root keys; `education`, `employment`, and `projects` may be empty. Sort known employment dates newest first. Store projects only at root; link them through unique, existing IDs in optional `employmentId`. Project weights are independent integers from 1–10.
+Keep schema-required root keys; `education`, `employment`, and `projects` may be empty. Sort known employment dates newest first. Store projects only at root; link them through unique IDs in optional `employmentId`. Project weights are independent integers from 1–10.
 
 ## Interview factual gaps
 
@@ -34,4 +34,4 @@ Close answers marked unknown, approximate, private, skipped, out of scope, or fi
 
 After each confirmed answer, re-read the target, build a targeted candidate, validate it, reconcile concurrent changes, then patch. Never write an invalid candidate.
 
-Run `make check` when scope is complete. Use `make validate-complete` only for downstream resume work. Report changed records, approximations, private records, unresolved notes, and validation results.
+Run `make check` when scope is complete. Report changed records, approximations, private records, unresolved notes, and validation results.

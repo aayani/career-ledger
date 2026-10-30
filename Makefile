@@ -1,4 +1,4 @@
-.PHONY: pdf inspect validate validate-complete validate-strict test check
+.PHONY: pdf inspect validate validate-strict test check
 
 CORE_RUN = uv run --with-requirements requirements/core.txt
 PROFILE_PATH = $(if $(strip $(path)),$(path),data/profile.yaml)
@@ -14,9 +14,6 @@ inspect:
 
 validate:
 	@$(CORE_RUN) python scripts/validate_profile.py "$(PROFILE_PATH)"
-
-validate-complete:
-	@$(CORE_RUN) python scripts/validate_profile.py "$(PROFILE_PATH)" --require-complete
 
 validate-strict:
 	@$(CORE_RUN) python scripts/validate_profile.py "$(PROFILE_PATH)" --warnings-as-errors
