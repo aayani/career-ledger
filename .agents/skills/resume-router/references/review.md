@@ -1,6 +1,6 @@
 # Resume Review
 
-Run these checks against `career.yaml` before delivering a resume. Fix every failure in the draft before presenting it.
+Run these checks against `data/profile.yaml` before delivering a resume. Fix every failure in the draft before presenting it.
 
 ## Integrity
 

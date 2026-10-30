@@ -1,6 +1,6 @@
 # Resume Tailoring
 
-Use this reference to decide what a resume should emphasize. It selects and frames facts from `career.yaml`; it never adds facts.
+Use this reference to decide what a resume should emphasize. It selects and frames facts from `data/profile.yaml`; it never adds facts.
 
 ## Requirement map
 
@@ -12,7 +12,7 @@ Build this map for **particular position** from the vacancy, and for **specific 
    - critical keywords, such as tools, methods, and domain terms, in the source's exact wording;
    - seniority and scope signals;
    - the problem the role is hired to solve, when the source states it.
-2. Map each requirement to supporting employment or skill IDs in `career.yaml` and classify it:
+2. Map each requirement to supporting employment or skill IDs in `data/profile.yaml` and classify it:
    - **Direct:** a role, achievement, project, or activity demonstrates it;
    - **Transferable:** adjacent evidence supports it, with a clear bridge;
    - **Gap:** no record supports it;

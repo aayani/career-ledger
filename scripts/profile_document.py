@@ -1,4 +1,4 @@
-"""Load the canonical YAML career database without losing duplicate-key errors."""
+"""Load the canonical YAML profile without losing duplicate-key errors."""
 
 from __future__ import annotations
 
@@ -8,8 +8,8 @@ from typing import Any
 import yaml
 
 
-class CareerDocumentError(RuntimeError):
-    """Raised when a career YAML document cannot be loaded safely."""
+class ProfileDocumentError(RuntimeError):
+    """Raised when a profile YAML document cannot be loaded safely."""
 
 
 class UniqueKeyLoader(yaml.SafeLoader):
@@ -27,11 +27,11 @@ def _construct_mapping(
         try:
             duplicate = key in mapping
         except TypeError as error:
-            raise CareerDocumentError(
+            raise ProfileDocumentError(
                 f"invalid unhashable mapping key at line {key_node.start_mark.line + 1}"
             ) from error
         if duplicate:
-            raise CareerDocumentError(
+            raise ProfileDocumentError(
                 f"duplicate key {key!r} at line {key_node.start_mark.line + 1}"
             )
         mapping[key] = loader.construct_object(value_node, deep=deep)
@@ -44,16 +44,16 @@ UniqueKeyLoader.add_constructor(
 )
 
 
-def load_document(path: Path) -> dict[str, Any]:
-    """Load a career YAML file and require a mapping at its root."""
+def load_profile(path: Path) -> dict[str, Any]:
+    """Load a profile YAML file and require a mapping at its root."""
     try:
         document = yaml.load(path.read_text(encoding="utf-8"), Loader=UniqueKeyLoader)
-    except CareerDocumentError:
+    except ProfileDocumentError:
         raise
     except (OSError, yaml.YAMLError) as error:
-        raise CareerDocumentError(f"invalid career YAML: {error}") from error
+        raise ProfileDocumentError(f"invalid profile YAML: {error}") from error
     if document is None:
         return {}
     if not isinstance(document, dict):
-        raise CareerDocumentError("career database must be a YAML mapping")
+        raise ProfileDocumentError("profile must be a YAML mapping")
     return document

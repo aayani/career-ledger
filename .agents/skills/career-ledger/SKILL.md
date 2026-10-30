@@ -1,19 +1,27 @@
 ---
 name: career-ledger
-description: Create, update, reconcile, or audit the canonical career evidence database through guided interviews or source-document intake. Use for career timelines, career-history intake, evidence clarification, CV import as source material, or maintaining career.yaml. Do not use to generate resumes, CVs, or cover letters as deliverables.
-user-invocable: false
+description: Create, update, reconcile, or audit the canonical career evidence database through guided interviews or source-document intake. Use for career timelines, career-history intake, evidence clarification, CV import as source material, or maintaining data/profile.yaml. Do not use to generate resumes, CVs, or cover letters as deliverables.
+user-invocable: true
 disable-model-invocation: false
 ---
 
 # Career Ledger
 
-Maintain `career.yaml` as a neutral, evidence-aware source of truth. A supplied CV is evidence input, not a resume deliverable; do not invoke `resume-cover-letter`.
+### Outputs
+
+- Maintain `data/profile.yaml` as a neutral evidence-aware source of truth.
+
+### Inputs
+
+- Existing CV/resume as evidence; do not invoke `resume-cover-letter`.
+- Guided interview to build a profile.
+- Section update in existing `data/profile.yaml`.
 
 ## Route the session
 
-From the repository root, read [workflow.md](references/workflow.md), inspect `career.yaml`, and follow only the applicable route.
+From the repository root, read [workflow.md](references/workflow.md), inspect `data/profile.yaml`, and follow only the applicable route.
 
-Before creating the database or changing its structure, read [schema.yaml](references/schema.yaml) and inspect `tests/fixtures/career-valid.yaml`. The JSON Schema expressed in YAML is authoritative. The scripts load and enforce it directly.
+Before creating the database or changing its structure, read [schema.yaml](references/schema.yaml) and inspect `tests/fixtures/profile-valid.yaml`. The JSON Schema expressed in YAML is authoritative. The scripts load and enforce it directly.
 
 ## Invariants
 

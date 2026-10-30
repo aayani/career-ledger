@@ -4,19 +4,19 @@ import unittest
 
 import yaml
 
-from scripts.inspect_state import inspect
+from scripts.inspect_profile import inspect_profile
 
 
-class InspectStateTests(unittest.TestCase):
+class ProfileInspectionTests(unittest.TestCase):
     def inspect_text(self, text: str):
         with TemporaryDirectory() as directory:
-            path = Path(directory) / "career.yaml"
+            path = Path(directory) / "profile.yaml"
             path.write_text(text, encoding="utf-8")
-            return inspect(path)
+            return inspect_profile(path)
 
     def test_missing_path(self):
         with TemporaryDirectory() as directory:
-            result = inspect(Path(directory) / "missing.yaml")
+            result = inspect_profile(Path(directory) / "missing.yaml")
         self.assertEqual("missing", result["content_state"])
         self.assertEqual(0, result["record_count"])
 
@@ -36,7 +36,7 @@ class InspectStateTests(unittest.TestCase):
         self.assertEqual("empty", result["content_state"])
 
     def test_populated_database_reports_counts(self):
-        fixture = Path(__file__).parent / "fixtures" / "career-valid.yaml"
+        fixture = Path(__file__).parent / "fixtures" / "profile-valid.yaml"
         data = yaml.safe_load(fixture.read_text(encoding="utf-8"))
         data["employment"][0]["private"] = True
         data["notes"] = ["Confirm dates."]
@@ -53,7 +53,7 @@ class InspectStateTests(unittest.TestCase):
     def test_invalid_yaml_is_reported(self):
         result = self.inspect_text("person: [\n")
         self.assertEqual("invalid", result["content_state"])
-        self.assertIn("invalid career YAML", result["error"])
+        self.assertIn("invalid profile YAML", result["error"])
 
     def test_invalid_collection_shapes_do_not_crash_inspection(self):
         result = self.inspect_text(

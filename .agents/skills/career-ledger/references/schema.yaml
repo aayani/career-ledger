@@ -1,7 +1,7 @@
 $schema: https://json-schema.org/draft/2020-12/schema
 $id: https://career-ledger.local/schema.yaml
-title: Career
-description: YAML representation of the career model.
+title: Profile
+description: YAML representation of the career profile model.
 type: object
 additionalProperties: false
 required:

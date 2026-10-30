@@ -1,10 +1,10 @@
-name: Validate career database
+name: Validate profile
 
 on:
   pull_request:
     paths:
-      - ".github/workflows/validate-career.yml"
-      - "career.yaml"
+      - ".github/workflows/validate-profile.yml"
+      - "data/profile.yaml"
       - "docs/resume/**"
       - "scripts/**"
       - "tests/**"
@@ -13,8 +13,8 @@ on:
       - "Makefile"
   push:
     paths:
-      - ".github/workflows/validate-career.yml"
-      - "career.yaml"
+      - ".github/workflows/validate-profile.yml"
+      - "data/profile.yaml"
       - "docs/resume/**"
       - "scripts/**"
       - "tests/**"
@@ -41,9 +41,9 @@ jobs:
         run: make test
       - name: Verify PDF dependencies
         run: uv run --with-requirements requirements/pdf.txt python -c "import markdown, pymupdf"
-      - name: Validate career database
-        if: ${{ hashFiles('career.yaml') != '' }}
+      - name: Validate profile
+        if: ${{ hashFiles('data/profile.yaml') != '' }}
         run: make validate
-      - name: Skip career validation when no database exists
-        if: ${{ hashFiles('career.yaml') == '' }}
-        run: echo "career.yaml does not exist yet; unit tests passed."
+      - name: Skip profile validation when no profile exists
+        if: ${{ hashFiles('data/profile.yaml') == '' }}
+        run: echo "data/profile.yaml does not exist yet; unit tests passed."

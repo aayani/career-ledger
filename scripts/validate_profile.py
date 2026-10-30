@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the canonical YAML career database."""
+"""Validate the canonical YAML profile."""
 
 from __future__ import annotations
 
@@ -11,11 +11,11 @@ from pathlib import Path
 from typing import Iterable
 
 try:
-    from scripts.career_document import CareerDocumentError, load_document
-    from scripts.career_schema import VALIDATOR
+    from scripts.profile_document import ProfileDocumentError, load_profile
+    from scripts.profile_schema import PROFILE_VALIDATOR
 except ModuleNotFoundError:  # Direct execution from the scripts directory.
-    from career_document import CareerDocumentError, load_document
-    from career_schema import VALIDATOR
+    from profile_document import ProfileDocumentError, load_profile
+    from profile_schema import PROFILE_VALIDATOR
 
 
 @dataclass(frozen=True)
@@ -90,16 +90,16 @@ def _employment_reference_findings(document: dict[str, object]) -> list[Finding]
     return findings
 
 
-def validate(path: Path, require_complete: bool = False) -> list[Finding]:
-    """Return schema and completeness findings for a career YAML file."""
+def validate_profile(path: Path, require_complete: bool = False) -> list[Finding]:
+    """Return schema and completeness findings for a profile YAML file."""
     try:
-        document = load_document(path)
-    except CareerDocumentError as error:
+        document = load_profile(path)
+    except ProfileDocumentError as error:
         return [Finding("ERROR", "$", str(error))]
 
     findings = [
         Finding("ERROR", _json_path(error.absolute_path), error.message)
-        for error in VALIDATOR.iter_errors(document)
+        for error in PROFILE_VALIDATOR.iter_errors(document)
     ]
     findings.extend(_employment_reference_findings(document))
 
@@ -116,14 +116,14 @@ def validate(path: Path, require_complete: bool = False) -> list[Finding]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("path", nargs="?", default="career.yaml", type=Path)
+    parser.add_argument("path", nargs="?", default="data/profile.yaml", type=Path)
     parser.add_argument("--require-complete", action="store_true")
     parser.add_argument("--warnings-as-errors", action="store_true")
     args = parser.parse_args()
     if not args.path.is_file():
         print(f"ERROR: file not found: {args.path}", file=sys.stderr)
         return 2
-    findings = validate(args.path, require_complete=args.require_complete)
+    findings = validate_profile(args.path, require_complete=args.require_complete)
     for finding in findings:
         print(f"{finding.level} {args.path}:{finding.path}: {finding.message}")
     errors = sum(item.level == "ERROR" for item in findings)

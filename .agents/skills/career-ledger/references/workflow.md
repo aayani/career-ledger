@@ -40,7 +40,7 @@ Make targeted edits, retain unrelated content and privacy flags, and reconcile c
 
 ## Write safely
 
-1. Re-read `career.yaml` and retain its baseline.
+1. Re-read `data/profile.yaml` and retain its baseline.
 2. Build a complete candidate outside the target.
 3. Run `make validate path=<candidate>`.
 4. Do not replace the target while errors remain.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Inspect whether a YAML career database is missing, empty, invalid, or populated."""
+"""Inspect whether a YAML profile is missing, empty, invalid, or populated."""
 
 from __future__ import annotations
 
@@ -10,11 +10,11 @@ import re
 from typing import Any
 
 try:
-    from scripts.career_document import CareerDocumentError, load_document
-    from scripts.career_schema import VALIDATOR
+    from scripts.profile_document import ProfileDocumentError, load_profile
+    from scripts.profile_schema import PROFILE_VALIDATOR
 except ModuleNotFoundError:  # Direct execution from the scripts directory.
-    from career_document import CareerDocumentError, load_document
-    from career_schema import VALIDATOR
+    from profile_document import ProfileDocumentError, load_profile
+    from profile_schema import PROFILE_VALIDATOR
 
 
 PLACEHOLDER_PATTERN = re.compile(r"^\s*\[[^\]\n]+\]\s*$")
@@ -52,12 +52,12 @@ def _list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
 
 
-def inspect(path: Path) -> dict[str, object]:
+def inspect_profile(path: Path) -> dict[str, object]:
     if not path.exists():
         return _base(path, "missing")
     try:
-        document = load_document(path)
-    except CareerDocumentError as error:
+        document = load_profile(path)
+    except ProfileDocumentError as error:
         result = _base(path, "invalid")
         result["error"] = str(error)
         return result
@@ -77,7 +77,7 @@ def inspect(path: Path) -> dict[str, object]:
         if isinstance(record, dict) and record.get("private") is True
     ]
     substantive = _substantive_scalars(document)
-    validation_error_count = sum(1 for _ in VALIDATOR.iter_errors(document))
+    validation_error_count = sum(1 for _ in PROFILE_VALIDATOR.iter_errors(document))
     state = "empty" if not substantive else "invalid" if validation_error_count else "populated"
     return {
         "path": str(path),
@@ -96,9 +96,9 @@ def inspect(path: Path) -> dict[str, object]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("path", nargs="?", default="career.yaml", type=Path)
+    parser.add_argument("path", nargs="?", default="data/profile.yaml", type=Path)
     args = parser.parse_args()
-    print(json.dumps(inspect(args.path), indent=2, sort_keys=True))
+    print(json.dumps(inspect_profile(args.path), indent=2, sort_keys=True))
     return 0
 
 

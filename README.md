@@ -25,7 +25,7 @@ Use it to:
 
 ### One dependable career record
 
-Maintain a canonical YAML database at `career.yaml`. Stable employment and skill IDs keep the history consistent as wording and skill usage evolve. Projects live in a separate root array and can optionally link to one or more employment records through an ID array.
+Maintain a canonical YAML database at `data/profile.yaml`. Stable employment and skill IDs keep the history consistent as wording and skill usage evolve. Projects live in a separate root array and can optionally link to one or more employment records through an ID array.
 
 ### Evidence-aware by design
 
@@ -49,7 +49,7 @@ Resume variants live in `docs/resume/`. The PDF workflow renders them into `outp
 
 ![Career Ledger workflow from evidence collection through validation, tailored resume generation, and PDF export](docs/images/workflow.jpeg)
 
-Career Ledger separates evidence from presentation. The career database stays neutral and reusable; each resume selects and adapts only the facts relevant to its audience.
+Career Ledger separates evidence from presentation. The profile stays neutral and reusable; each resume selects and adapts only the facts relevant to its audience.
 
 ## Get started
 
@@ -77,7 +77,7 @@ Open the repository with an AI coding agent that supports repository instruction
 Help me write my career timeline.
 ```
 
-Choose either an existing resume import or a guided interview. The workflow creates `career.yaml` and records material gaps as concise top-level notes.
+Choose either an existing resume import or a guided interview. The workflow creates `data/profile.yaml` and records material gaps as concise top-level notes.
 
 ### 3. Validate the evidence
 
@@ -123,7 +123,7 @@ Project relevance is an independent integer score from 1 to 10. Skill-group IDs 
 
 ## Commands
 
-Inspect whether the career database is missing, empty, or populated:
+Inspect whether the profile is missing, empty, or populated:
 
 ```bash
 make inspect
@@ -147,7 +147,7 @@ Run the test suite:
 make test
 ```
 
-Run tests and validation together after `career.yaml` exists:
+Run tests and validation together after `data/profile.yaml` exists:
 
 ```bash
 make check
