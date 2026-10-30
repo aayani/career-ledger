@@ -2,12 +2,12 @@
 
 ## Conversation style
 
-- Tone: Assuring and light hearted
-- Be straightforward
-- Use minimum words
-- Ask the question directly
-- If the user needs to presented with choices; use numbered options like (1), (2), (3) etc.
-- User is not interested in what you are doing or what skill you are using, so maintain radio silence while working.
+- Tone: Keep it light, friendly, and reassuring.
+- Clarity: Be direct and cut unnecessary fluff.
+- Conciseness: Use as few words as possible.
+- Directness: Ask questions straight away without preambles.
+- Choices: Present options using numbered lists: (1), (2), (3).
+- Efficiency: Maintain radio silence on internal steps and process execution.
 
 ## Skills
 
@@ -23,7 +23,7 @@ Do not modify third-party or vendored skills unless the user explicitly asks to 
 
 #### Custom Skills
 
-- `career-timeline`
+- `career-ledger`
 - `resume-router`
 
 #### Third-Party Skills

@@ -1,42 +1,40 @@
 ---
 name: resume-router
-description: Route every request to generate, update, or tailor a resume or CV before invoking resume-cover-letter. Present the supported resume scopes, collect only the route-specific input, and hand the selected scope to the writer. Do not use for cover-letter-only requests or career-history intake.
+description: Route resume or CV requests by scope, gather only missing inputs, and hand off to resume-cover-letter. Do not use for cover-letter-only requests or career-history intake.
+user-invocable: false
+disable-model-invocation: false
 ---
 
 # Resume Router
 
-Run this repository-owned adapter before `resume-cover-letter` whenever the requested deliverable includes a resume or CV. Cover-letter-only requests bypass it.
+Use before `resume-cover-letter` for every resume or CV request. Cover-letter-only requests bypass it.
 
 ## Select the scope
 
-Use an unambiguously requested scope without repeating the menu. Otherwise ask exactly:
+Use a clear requested scope. Otherwise ask:
 
 > What should be the scope of the resume?
 >
-> (1) General  
-> (2) For a particular position (paste link or job description)  
+> (1) General
+>
+> (2) Particular position (paste link or description)
+>
 > (3) For a specific role
 
-Gather only the missing route input: the vacancy URL or description for **particular position**, or the target role for **specific role**. **General** needs neither a vacancy nor a company.
+Gather only the vacancy for **particular position** or role name for **specific role**. **General** needs neither.
 
 ## Use repository evidence first
 
-Read `docs/career.md` and run `make validate-complete`. Resolve validation errors before drafting. Inspect the relevant existing resume files under `docs/resume/`, and ask only for material facts or preferences unavailable from those sources.
-
-Determine the target market from the vacancy or request. Support Sweden/EU and other markets in addition to AU/NZ, US, and UK; ask only when regional convention materially changes the result.
+Read `data/profile.yaml`, run `make validate`, and inspect relevant files in `docs/resume/`. Resolve errors and ask only for missing material facts or preferences. Infer the market; ask only when regional convention matters.
 
 ## Shape the target before drafting
 
-Read [tailoring.md](references/tailoring.md) before every handoff. For **particular position** and **specific role**, build its requirement map and pass the map, top priorities, and genuine gaps to the writer. For **general**, apply only its emphasis rules.
+Read [tailoring.md](references/tailoring.md). Build a requirement map for targeted scopes; use only its emphasis rules for **general**.
 
 ## Handoff to the writer
 
-Invoke `resume-cover-letter` with the selected scope, repository evidence, target market, existing variant when applicable, and unresolved inputs. Apply the scope contract above instead of the writer's generic input defaults, and do not ask again for background already supported by `docs/career.md`.
-
-Create and update resume deliverables under `docs/resume/`. Do not use the repository-root `resume/` directory.
+Invoke `resume-cover-letter` with scope, evidence, market, existing variant, priorities, gaps, and unresolved inputs. Do not re-ask facts in `data/profile.yaml`. Save resumes under `docs/resume/`.
 
 ## Review before delivery
 
-Before presenting or saving any resume, run every check in [review.md](references/review.md) against `docs/career.md`. Correct failures in the draft, then report remaining gaps, assumptions, and approximate values to the user.
-
-Before overwriting an existing variant, ask whether the user has submitted it. If so, create a new variant so the submitted version stays available for later interview rounds.
+Apply [review.md](references/review.md) before delivery. Correct failures and report remaining gaps, assumptions, and approximations. Preserve submitted variants by creating a new file.

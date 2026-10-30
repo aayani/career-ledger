@@ -1,61 +1,73 @@
 # Career Ledger
 
-![Career Ledger turns verified career history into focused, application-ready resumes](docs/images/cover.jpeg)
+A local-first career profile and resume workflow for turning scattered professional history into a reusable source of truth—without inventing facts.
 
-A local-first career knowledge system for building a trusted professional history, generating focused resumes, and keeping every claim grounded in evidence.
+![Career Ledger terminal workflow](./docs/images/workflow.gif)
 
-[Why Career Ledger?](#why-career-ledger) · [How it works](#how-it-works) · [Get started](#get-started) · [Commands](#commands)
+[Why Career Ledger?](#why-career-ledger) · [How it works?](#how-it-works) · [Getting started](#getting-started) · [Commands](#commands)
 
-## Your career, without the guesswork
+### Your career, without the guesswork
 
-Career details are usually scattered across old resumes, profiles, documents, and memory. Career Ledger brings them together in one structured source of truth, then helps an AI coding agent turn that evidence into application-ready material without inventing facts or quietly strengthening uncertain claims.
+Career details drift across old resumes, profiles, documents, and memory. Career Ledger brings them into one structured profile, validates the data, and helps an AI coding agent produce focused resumes from the facts you approve.
 
-Use it to:
-
-- Capture roles, achievements, skills, projects, education, and career breaks;
-- Distinguish verified facts from estimates and unverified claims;
-- Preserve evidence, ownership, disclosure limits, and unresolved gaps;
-- Generate general, role-focused, or vacancy-specific resumes;
-- Export clean, ATS-friendly Markdown resumes to PDF.
+- Capture roles, achievements, projects, skills, education, languages, and career breaks.
+- Keep undisclosable education, employment, and skill usage out of application materials.
+- Preserve unresolved gaps without turning them into confident claims.
+- Generate general, role-focused, or vacancy-specific resumes.
+- Export compact, single-column resumes to PDF.
 
 > [!IMPORTANT]
-> Imported resumes are treated as source material, not proof. Career Ledger keeps uncertainty visible until you confirm the facts.
+> Imported resumes are source material, not proof. Career Ledger keeps uncertain details visible until you confirm or close them.
 
 ## Why Career Ledger?
 
-### One dependable career record
+### One profile, many applications
 
-Maintain a canonical Markdown database at `docs/career.md`. Stable semantic IDs connect roles, achievements, skills, projects, and follow-ups, so the history remains consistent as wording evolves.
+Your canonical profile lives in `data/profile.yaml`. Resume variants select and adapt relevant facts without rewriting your career history for every application.
 
-### Evidence-aware by design
+### AI assistance with guardrails
 
-Every material achievement can record verification status, provenance, personal ownership, and disclosure restrictions. Honest qualitative results are preferred over invented metrics.
+Portable Agent Skills guide intake, clarification, auditing, updates, and resume generation. They preserve stable records, avoid stronger claims, and ask for missing facts one at a time.
 
-### Built for practical AI collaboration
+### Validation built in
 
-Portable Agent Skills guide career intake and resume creation. Repository instructions keep supported coding agents aligned on the same workflows instead of relying on provider-specific copies.
+JSON Schema validation checks required fields, formats, IDs, controlled values, privacy flags, project links, and exact duplicates before profile data reaches a resume.
 
-### Quality gates included
+### Application-ready output
 
-The validator checks schema compatibility, required fields, dates, semantic IDs, typed references, controlled values, chronology, evidence gaps, and unresolved follow-ups before career data reaches a resume.
+Generated resumes are saved under `docs/resume/`. The PDF workflow produces compact A4 documents in `output/`.
 
-### Application-ready outputs
+## How it works?
 
-Resume variants live in `docs/resume/`. The PDF workflow renders them into `output/` using a compact, single-column layout suitable for applicant tracking systems.
+Career Ledger separates durable career facts from application-specific presentation:
 
-## How it works
+![Career Ledger terminal walkthrough from import to PDF export](./docs/images/terminal-demo.gif)
 
-![Career Ledger workflow from evidence collection through validation, tailored resume generation, and PDF export](docs/images/workflow.jpeg)
+### Use the career-ledger skill
 
-Career Ledger separates evidence from presentation. The career database stays neutral and reusable; each resume selects and adapts only the facts relevant to its audience.
+The `career-ledger` skill is the main interface:
 
-## Get started
+- `audit`: report errors, conflicts, privacy issues, unsupported claims, and gaps.
+- `clarify`: inspect gaps and ask one factual question at a time.
+- `generate`: create a resume through the resume workflow.
+- `import`: reconcile a resume, CV, or other career evidence.
+- `update`: change specific career facts.
 
-### 1. Fork the repository
+Invoke `/career-ledger` without an argument to describe a profile task naturally.
 
-The best way to use Career Ledger is to fork it and maintain your own copy. This gives you an independent career workspace while making it easy to pull in future improvements.
+### What the profile stores
 
-After forking the repository on GitHub, clone your fork:
+- Identity, contact details, location, and languages
+- Education and employment history
+- Projects with concise situation, task, action, and result fields
+- Reusable skill groups with tools, frameworks, and methods
+- Privacy flags and material unresolved notes
+
+The authoritative model is defined in `.agents/skills/career-ledger/references/schema.yaml`.
+
+## Getting started
+
+### 1. Fork and clone
 
 ```bash
 git clone https://github.com/<your-github-username>/career-ledger.git
@@ -63,104 +75,53 @@ cd career-ledger
 ```
 
 > [!CAUTION]
-> Career records may contain personal information. Check your repository's visibility before committing real career data.
+> Career records contain personal information. Confirm your repository visibility before committing real data.
 
-Python 3.10 or newer and [`uv`](https://docs.astral.sh/uv/) are required. Commands install their isolated dependencies on demand.
+Python 3.10 or newer and [`uv`](https://docs.astral.sh/uv/) are required for local commands.
 
-### 2. Build your career ledger
+### 2. Build your profile
 
-Open the repository with an AI coding agent that supports repository instructions and Agent Skills, then ask:
+Open the repository with an AI coding agent that supports Agent Skills, then import existing material:
 
 ```text
-Help me write my career timeline.
+/career-ledger import
 ```
 
-Choose either an existing resume import or a guided interview. The workflow creates `docs/career.md` and records material gaps as explicit follow-ups.
+Or start a guided interview:
 
-### 3. Validate the evidence
-
-```bash
-make validate
+```text
+/career-ledger clarify
 ```
 
-Before generating a resume, require the minimum complete dataset:
+### 3. Generate a resume
 
-```bash
-make validate-complete
+```text
+/career-ledger generate
 ```
 
-### 4. Generate a resume
+Choose a general resume, a specific role, or a particular vacancy. The result is saved under `docs/resume/`.
 
-Ask your agent to generate a resume. Career Ledger routes the request to one of three scopes:
+### 4. Export to PDF
 
-1. General
-2. For a particular position using a vacancy link or job description
-3. For a specific role
-
-Resume source files are written to `docs/resume/`.
-
-### 5. Export to PDF
-
-```bash
-make pdf path=docs/resume/backend.md
+```sh
+make pdf path=docs/resume/CHANGE_ME.md
 ```
-
-The PDF is written to `output/backend.pdf`. Pass `--output` directly to `scripts/markdown_to_pdf.py` when you need a custom destination.
-
-## What the ledger captures
-
-- Identity and positioning facts
-- Employers, roles, responsibilities, and achievements
-- Education, certifications, projects, and professional activities
-- Languages and career breaks
-- Skills linked back to supporting evidence
-- Data-quality follow-ups for missing or conflicting facts
-
-The schema supports `Verified`, `Estimated`, and `Unverified` claims; contribution ownership from `Lead` through `Support`; and disclosure exceptions for interview-only or non-disclosable material.
 
 ## Commands
 
-Inspect whether the career database is missing, empty, or populated:
-
 ```bash
-make inspect
-```
-
-Validate the database:
-
-```bash
-make validate
-```
-
-Require roles and skills for downstream resume work:
-
-```bash
-make validate-complete
-```
-
-Run the test suite:
-
-```bash
-make test
-```
-
-Run tests and validation together after `docs/career.md` exists:
-
-```bash
-make check
-```
-
-Treat warnings as failures in stricter automation:
-
-```bash
-make validate-strict
+make inspect          # Inspect profile state
+make validate         # Validate the profile
+make validate-strict  # Treat warnings as failures
+make test             # Run tests
+make check            # Run tests and validation
 ```
 
 ## Designed for trustworthy applications
 
-Career Ledger is for professionals who want the speed of AI-assisted writing without losing control of accuracy. It keeps the durable facts separate from the final pitch, making it easier to tailor applications while preserving a clear, auditable foundation.
+Career Ledger gives professionals the speed of AI-assisted writing while keeping durable facts separate from the final pitch. Fork the repository, run `/career-ledger import`, and keep control of the record behind every application.
 
-Improvements are welcome. If you have an idea for a workflow, validator, portability enhancement, or documentation update, open an issue or submit a pull request to the main repository.
+Contributions are welcome through issues and pull requests.
 
 ## License
 

@@ -1,0 +1,312 @@
+from copy import deepcopy
+from contextlib import redirect_stdout
+from io import StringIO
+from pathlib import Path
+from tempfile import TemporaryDirectory
+import unittest
+from unittest.mock import patch
+
+import yaml
+
+from scripts.profile_schema import (
+    PROFILE_SCHEMA,
+    PROFILE_SCHEMA_PATH,
+    load_profile_schema,
+)
+from scripts.validate_profile import main, validate_profile
+
+
+VALID_PROFILE = yaml.safe_load(
+    (Path(__file__).parent / "fixtures" / "profile-valid.yaml").read_text(encoding="utf-8")
+)
+
+
+class ProfileValidationTests(unittest.TestCase):
+    def validate_data(self, data):
+        return self.validate_text(yaml.safe_dump(data, sort_keys=False))
+
+    def validate_text(self, text: str):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "profile.yaml"
+            path.write_text(text, encoding="utf-8")
+            return validate_profile(path)
+
+    def errors(self, data):
+        return [
+            item.message
+            for item in self.validate_data(data)
+            if item.level == "ERROR"
+        ]
+
+    def test_valid_database_has_no_findings(self):
+        self.assertEqual([], self.validate_data(VALID_PROFILE))
+
+    def test_cli_skips_missing_profile(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "profile.yaml"
+            output = StringIO()
+            with patch("sys.argv", ["validate_profile.py", str(path)]):
+                with redirect_stdout(output):
+                    result = main()
+        self.assertEqual(0, result)
+        self.assertIn("Validation skipped", output.getvalue())
+
+    def test_required_fields_and_unknown_fields_are_enforced(self):
+        missing = deepcopy(VALID_PROFILE)
+        missing["person"].pop("contact")
+        self.assertTrue(any("required property" in message for message in self.errors(missing)))
+
+        unknown = deepcopy(VALID_PROFILE)
+        unknown["surprise"] = True
+        self.assertTrue(any("Additional properties" in message for message in self.errors(unknown)))
+
+    def test_formats_enums_and_id_patterns_are_enforced(self):
+        invalid = deepcopy(VALID_PROFILE)
+        invalid["person"]["contact"]["email"] = "not-an-email"
+        invalid["employment"][0]["type"] = "casual"
+        invalid["employment"][0]["id"] = "bad id"
+        messages = self.errors(invalid)
+        self.assertTrue(any("does not match" in message for message in messages))
+        self.assertTrue(any("is not one of" in message for message in messages))
+
+    def test_education_and_project_ids_are_required_and_valid(self):
+        for collection in ("education", "projects"):
+            with self.subTest(collection=collection, condition="required"):
+                missing = deepcopy(VALID_PROFILE)
+                missing[collection][0].pop("id")
+                self.assertTrue(
+                    any(
+                        "'id' is a required property" in message
+                        for message in self.errors(missing)
+                    )
+                )
+
+            with self.subTest(collection=collection, condition="pattern"):
+                invalid = deepcopy(VALID_PROFILE)
+                invalid[collection][0]["id"] = "bad id"
+                self.assertTrue(
+                    any(
+                        "does not match" in message
+                        for message in self.errors(invalid)
+                    )
+                )
+
+            with self.subTest(collection=collection, condition="duplicate-id"):
+                duplicate = deepcopy(VALID_PROFILE)
+                repeated = deepcopy(duplicate[collection][0])
+                if collection == "education":
+                    repeated["institution"] = "Another University"
+                else:
+                    repeated["name"] = "Another project"
+                duplicate[collection].append(repeated)
+                self.assertEqual([], self.errors(duplicate))
+
+    def test_weightage_is_required_integer_from_one_to_ten(self):
+        for value in (0, 4.5, 11):
+            with self.subTest(value=value):
+                invalid = deepcopy(VALID_PROFILE)
+                invalid["projects"][0]["weightage"] = value
+                self.assertNotEqual([], self.errors(invalid))
+
+        missing = deepcopy(VALID_PROFILE)
+        missing["projects"][0].pop("weightage")
+        self.assertTrue(any("weightage" in message for message in self.errors(missing)))
+
+    def test_unnamed_project_requires_description(self):
+        valid = deepcopy(VALID_PROFILE)
+        valid["projects"][0].pop("name")
+        self.assertEqual([], self.errors(valid))
+
+        invalid = deepcopy(valid)
+        invalid["projects"][0].pop("description")
+        self.assertNotEqual([], self.errors(invalid))
+
+    def test_project_uses_star_fields(self):
+        for field in ("situation", "task", "action", "result"):
+            with self.subTest(field=field):
+                valid = deepcopy(VALID_PROFILE)
+                valid["projects"][0][field] = f"Example {field}."
+                self.assertEqual([], self.errors(valid))
+
+        for legacy_field in ("contribution", "outcome", "evidence"):
+            with self.subTest(legacy_field=legacy_field):
+                invalid = deepcopy(VALID_PROFILE)
+                invalid["projects"][0][legacy_field] = "Legacy value."
+                self.assertTrue(
+                    any(
+                        "Additional properties" in message
+                        for message in self.errors(invalid)
+                    )
+                )
+
+        blank = deepcopy(VALID_PROFILE)
+        blank["projects"][0]["action"] = "   "
+        self.assertTrue(any("does not match" in message for message in self.errors(blank)))
+
+        for field in ("situation", "task", "action", "result"):
+            with self.subTest(field=field, length=100):
+                boundary = deepcopy(VALID_PROFILE)
+                boundary["projects"][0][field] = "x" * 100
+                self.assertEqual([], self.errors(boundary))
+
+            with self.subTest(field=field, length=101):
+                too_long = deepcopy(VALID_PROFILE)
+                too_long["projects"][0][field] = "x" * 101
+                self.assertTrue(
+                    any("is too long" in message for message in self.errors(too_long))
+                )
+
+    def test_exact_duplicate_arrays_are_rejected(self):
+        cases = []
+
+        employment = deepcopy(VALID_PROFILE)
+        employment["employment"].append(deepcopy(employment["employment"][0]))
+        cases.append(employment)
+
+        project = deepcopy(VALID_PROFILE)
+        project["projects"].append(deepcopy(project["projects"][0]))
+        cases.append(project)
+
+        skill = deepcopy(VALID_PROFILE)
+        skill["projects"][0]["skills"].append(
+            deepcopy(skill["projects"][0]["skills"][0])
+        )
+        cases.append(skill)
+
+        language = deepcopy(VALID_PROFILE)
+        language["person"]["languages"].append(
+            deepcopy(language["person"]["languages"][0])
+        )
+        cases.append(language)
+
+        for data in cases:
+            with self.subTest(data=data):
+                self.assertTrue(any("non-unique" in message for message in self.errors(data)))
+
+    def test_education_fields_follow_type(self):
+        base = {
+            "id": "education-example-certification-2025",
+            "city": {"name": "Online", "country": "Online"},
+            "type": "certification",
+            "startDate": "2025-01",
+            "credentialId": "ABC-123",
+            "credentialUrl": "https://example.com/credential",
+        }
+        valid = deepcopy(VALID_PROFILE)
+        valid["education"] = [base]
+        self.assertEqual([], self.errors(valid))
+
+        invalid = deepcopy(valid)
+        invalid["education"][0]["degree"] = "Bachelor"
+        self.assertNotEqual([], self.errors(invalid))
+
+        invalid = deepcopy(VALID_PROFILE)
+        invalid["education"] = [{**base, "type": "course", "credentialId": "ABC-123"}]
+        self.assertNotEqual([], self.errors(invalid))
+
+    def test_private_is_optional_boolean(self):
+        valid = deepcopy(VALID_PROFILE)
+        valid["employment"][0]["private"] = True
+        valid["projects"][0]["skills"][0]["private"] = True
+        self.assertEqual([], self.errors(valid))
+
+        invalid = deepcopy(valid)
+        invalid["employment"][0]["private"] = "yes"
+        self.assertNotEqual([], self.errors(invalid))
+
+    def test_skill_group_requires_unique_nonblank_keywords(self):
+        missing = deepcopy(VALID_PROFILE)
+        missing["projects"][0]["skills"][0].pop("keywords")
+        self.assertTrue(any("keywords" in message for message in self.errors(missing)))
+
+        duplicate = deepcopy(VALID_PROFILE)
+        duplicate["projects"][0]["skills"][0]["keywords"] = [
+            "Python",
+            "Python",
+        ]
+        self.assertTrue(
+            any("non-unique" in message for message in self.errors(duplicate))
+        )
+
+        blank = deepcopy(VALID_PROFILE)
+        blank["projects"][0]["skills"][0]["keywords"] = ["   "]
+        self.assertTrue(any("does not match" in message for message in self.errors(blank)))
+
+    def test_project_employment_id_is_optional_and_schema_validated(self):
+        independent = deepcopy(VALID_PROFILE)
+        independent["projects"][0].pop("employmentId")
+        self.assertEqual([], self.errors(independent))
+
+        invalid = deepcopy(VALID_PROFILE)
+        invalid["projects"][0]["employmentId"] = ["bad id"]
+        self.assertTrue(
+            any("does not match" in message for message in self.errors(invalid))
+        )
+
+        scalar = deepcopy(VALID_PROFILE)
+        scalar["projects"][0]["employmentId"] = "employment-example"
+        self.assertTrue(any("is not of type" in message for message in self.errors(scalar)))
+
+        duplicate = deepcopy(VALID_PROFILE)
+        duplicate["projects"][0]["employmentId"] *= 2
+        self.assertTrue(any("non-unique" in message for message in self.errors(duplicate)))
+
+        dangling = deepcopy(VALID_PROFILE)
+        dangling["projects"][0]["employmentId"] = ["employment-does-not-exist"]
+        self.assertEqual([], self.errors(dangling))
+
+        multiple = deepcopy(VALID_PROFILE)
+        second_employment = deepcopy(multiple["employment"][0])
+        second_employment["id"] = "employment-example-university-research-assistant-2020"
+        multiple["employment"].append(second_employment)
+        multiple["projects"][0]["employmentId"].append(second_employment["id"])
+        self.assertEqual([], self.errors(multiple))
+
+        nested = deepcopy(VALID_PROFILE)
+        nested["employment"][0]["projects"] = [deepcopy(nested["projects"][0])]
+        self.assertTrue(
+            any("Additional properties" in message for message in self.errors(nested))
+        )
+
+    def test_duplicate_yaml_key_is_an_error(self):
+        text = """person: {}
+person: {}
+location: {}
+education: []
+employment: []
+projects: []
+"""
+        findings = self.validate_text(text)
+        self.assertTrue(any("duplicate key" in item.message for item in findings))
+
+    def test_non_mapping_root_is_an_error(self):
+        findings = self.validate_text("- not\n- a\n- mapping\n")
+        self.assertTrue(any("must be a YAML mapping" in item.message for item in findings))
+
+    def test_empty_record_collections_are_valid(self):
+        empty = deepcopy(VALID_PROFILE)
+        empty["education"] = []
+        empty["employment"] = []
+        empty["projects"] = []
+        self.assertEqual([], self.errors(empty))
+
+    def test_schema_is_loaded_from_schema_yaml(self):
+        self.assertEqual("schema.yaml", PROFILE_SCHEMA_PATH.name)
+        self.assertEqual("Profile", PROFILE_SCHEMA["title"])
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "schema.yaml"
+            schema = deepcopy(PROFILE_SCHEMA)
+            schema["title"] = "Test Profile"
+            path.write_text(yaml.safe_dump(schema, sort_keys=False), encoding="utf-8")
+            self.assertEqual("Test Profile", load_profile_schema(path)["title"])
+
+    def test_schema_rejects_non_mapping_root(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "schema.yaml"
+            path.write_text("- not\n- a\n- mapping\n", encoding="utf-8")
+            with self.assertRaisesRegex(RuntimeError, "YAML mapping"):
+                load_profile_schema(path)
+
+
+if __name__ == "__main__":
+    unittest.main()
