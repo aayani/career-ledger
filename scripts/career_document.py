@@ -1,155 +1,59 @@
-"""Parse the Markdown career database into a shared document model."""
+"""Load the canonical YAML career database without losing duplicate-key errors."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-import re
+from pathlib import Path
+from typing import Any
 
-try:
-    from scripts.career_schema import (
-        DATA_SECTIONS, EXPERIENCE_SECTION, IDENTITY_FIELDS, IDENTITY_SECTION,
-        LANGUAGES_SECTION, METADATA_FIELDS, METADATA_SECTION, POSITIONING_FIELDS,
-        POSITIONING_SECTION, SECTION_KINDS,
-    )
-except ModuleNotFoundError:  # Direct execution from the scripts directory.
-    from career_schema import (
-        DATA_SECTIONS, EXPERIENCE_SECTION, IDENTITY_FIELDS, IDENTITY_SECTION,
-        LANGUAGES_SECTION, METADATA_FIELDS, METADATA_SECTION, POSITIONING_FIELDS,
-        POSITIONING_SECTION, SECTION_KINDS,
-    )
+import yaml
 
 
-FIELD_PATTERN = re.compile(r"^- ([^:]+):\s*(.*)$")
-PLACEHOLDER_PATTERN = re.compile(r"\[[^\]\n]+\](?!\()")
-KNOWN_SECTIONS = DATA_SECTIONS
+class CareerDocumentError(RuntimeError):
+    """Raised when a career YAML document cannot be loaded safely."""
 
 
-@dataclass(frozen=True)
-class FieldValue:
-    value: str
-    line: int
+class UniqueKeyLoader(yaml.SafeLoader):
+    """Safe YAML loader that rejects duplicate mapping keys."""
 
 
-@dataclass
-class Record:
-    kind: str
-    title: str
-    line: int
-    fields: dict[str, FieldValue] = field(default_factory=dict)
+def _construct_mapping(
+    loader: UniqueKeyLoader,
+    node: yaml.MappingNode,
+    deep: bool = False,
+) -> dict[Any, Any]:
+    mapping: dict[Any, Any] = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        try:
+            duplicate = key in mapping
+        except TypeError as error:
+            raise CareerDocumentError(
+                f"invalid unhashable mapping key at line {key_node.start_mark.line + 1}"
+            ) from error
+        if duplicate:
+            raise CareerDocumentError(
+                f"duplicate key {key!r} at line {key_node.start_mark.line + 1}"
+            )
+        mapping[key] = loader.construct_object(value_node, deep=deep)
+    return mapping
 
 
-@dataclass(frozen=True)
-class ParseIssue:
-    line: int
-    message: str
+UniqueKeyLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    _construct_mapping,
+)
 
 
-@dataclass
-class Document:
-    metadata: dict[str, FieldValue] = field(default_factory=dict)
-    identity: dict[str, FieldValue] = field(default_factory=dict)
-    positioning: dict[str, FieldValue] = field(default_factory=dict)
-    languages: dict[str, FieldValue] = field(default_factory=dict)
-    records: list[Record] = field(default_factory=list)
-    issues: list[ParseIssue] = field(default_factory=list)
-
-
-def _store(target: dict[str, FieldValue], name: str, value: str, line: int, issues: list[ParseIssue]) -> None:
-    if name in target:
-        issues.append(ParseIssue(line, f"duplicate field: {name}"))
-        return
-    target[name] = FieldValue(value.strip(), line)
-
-
-def _section_kind(section: str) -> str | None:
-    return SECTION_KINDS.get(section)
-
-
-def is_placeholder(value: str) -> bool:
-    """Return whether text contains a bracketed template placeholder, not a Markdown link."""
-    return bool(PLACEHOLDER_PATTERN.search(value))
-
-
-def parse_document(text: str) -> Document:
-    document = Document()
-    section = ""
-    current: Record | None = None
-    employer: str | None = None
-    current_role: Record | None = None
-    for number, raw in enumerate(text.splitlines(), 1):
-        line = raw.rstrip()
-        if line.startswith("## "):
-            section = line[3:].strip()
-            current = None
-            employer = None
-            current_role = None
-            if section not in KNOWN_SECTIONS:
-                document.issues.append(ParseIssue(number, f"unknown section: {section}"))
-            continue
-        if line.startswith("##### "):
-            if section == EXPERIENCE_SECTION and current_role is not None:
-                current = Record("achievement", line[6:].strip(), number)
-                document.records.append(current)
-            elif section == EXPERIENCE_SECTION:
-                document.issues.append(ParseIssue(number, "achievement heading without a role"))
-                current = None
-            else:
-                document.issues.append(ParseIssue(number, "achievement heading outside Experience"))
-                current = None
-            continue
-        if line.startswith("#### "):
-            if section == EXPERIENCE_SECTION and employer is not None:
-                current = Record("role", line[5:].strip(), number)
-                current_role = current
-                document.records.append(current)
-            elif section == EXPERIENCE_SECTION:
-                document.issues.append(ParseIssue(number, "role heading without an employer"))
-                current = None
-                current_role = None
-            else:
-                document.issues.append(ParseIssue(number, "role heading outside Experience"))
-                current = None
-            continue
-        if line.startswith("### "):
-            title = line[4:].strip()
-            if section == EXPERIENCE_SECTION:
-                employer = title
-                current = None
-                current_role = None
-            else:
-                kind = _section_kind(section)
-                current = Record(kind, title, number) if kind else None
-                if current:
-                    document.records.append(current)
-            continue
-        match = FIELD_PATTERN.match(line)
-        if not match:
-            continue
-        name, value = match.groups()
-        name = name.strip()
-        if section == METADATA_SECTION:
-            _store(document.metadata, name, value, number, document.issues)
-        elif section == IDENTITY_SECTION:
-            _store(document.identity, name, value, number, document.issues)
-        elif section == POSITIONING_SECTION:
-            _store(document.positioning, name, value, number, document.issues)
-        elif section == LANGUAGES_SECTION:
-            _store(document.languages, name, value, number, document.issues)
-        elif current:
-            _store(current.fields, name, value, number, document.issues)
-        elif section == EXPERIENCE_SECTION or _section_kind(section):
-            document.issues.append(ParseIssue(number, f"field outside record: {name}"))
+def load_document(path: Path) -> dict[str, Any]:
+    """Load a career YAML file and require a mapping at its root."""
+    try:
+        document = yaml.load(path.read_text(encoding="utf-8"), Loader=UniqueKeyLoader)
+    except CareerDocumentError:
+        raise
+    except (OSError, yaml.YAMLError) as error:
+        raise CareerDocumentError(f"invalid career YAML: {error}") from error
+    if document is None:
+        return {}
+    if not isinstance(document, dict):
+        raise CareerDocumentError("career database must be a YAML mapping")
     return document
-
-
-def unknown_section_fields(document: Document) -> list[ParseIssue]:
-    issues = []
-    for values, allowed, label in (
-        (document.metadata, METADATA_FIELDS, "metadata"),
-        (document.identity, IDENTITY_FIELDS, "identity"),
-        (document.positioning, POSITIONING_FIELDS, "positioning"),
-    ):
-        for name, entry in values.items():
-            if name not in allowed:
-                issues.append(ParseIssue(entry.line, f"unknown {label} field: {name}"))
-    return issues

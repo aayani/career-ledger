@@ -1,6 +1,8 @@
 ---
 name: resume-router
 description: Route every request to generate, update, or tailor a resume or CV before invoking resume-cover-letter. Present the supported resume scopes, collect only the route-specific input, and hand the selected scope to the writer. Do not use for cover-letter-only requests or career-history intake.
+user-invocable: false
+disable-model-invocation: false
 ---
 
 # Resume Router
@@ -21,7 +23,7 @@ Gather only the missing route input: the vacancy URL or description for **partic
 
 ## Use repository evidence first
 
-Read `docs/career.md` and run `make validate-complete`. Resolve validation errors before drafting. Inspect the relevant existing resume files under `docs/resume/`, and ask only for material facts or preferences unavailable from those sources.
+Read `career.yaml` and run `make validate-complete`. Resolve validation errors before drafting. Inspect the relevant existing resume files under `docs/resume/`, and ask only for material facts or preferences unavailable from those sources.
 
 Determine the target market from the vacancy or request. Support Sweden/EU and other markets in addition to AU/NZ, US, and UK; ask only when regional convention materially changes the result.
 
@@ -31,12 +33,12 @@ Read [tailoring.md](references/tailoring.md) before every handoff. For **particu
 
 ## Handoff to the writer
 
-Invoke `resume-cover-letter` with the selected scope, repository evidence, target market, existing variant when applicable, and unresolved inputs. Apply the scope contract above instead of the writer's generic input defaults, and do not ask again for background already supported by `docs/career.md`.
+Invoke `resume-cover-letter` with the selected scope, repository evidence, target market, existing variant when applicable, and unresolved inputs. Apply the scope contract above instead of the writer's generic input defaults, and do not ask again for background already supported by `career.yaml`.
 
 Create and update resume deliverables under `docs/resume/`. Do not use the repository-root `resume/` directory.
 
 ## Review before delivery
 
-Before presenting or saving any resume, run every check in [review.md](references/review.md) against `docs/career.md`. Correct failures in the draft, then report remaining gaps, assumptions, and approximate values to the user.
+Before presenting or saving any resume, run every check in [review.md](references/review.md) against `career.yaml`. Correct failures in the draft, then report remaining gaps, assumptions, and approximate values to the user.
 
 Before overwriting an existing variant, ask whether the user has submitted it. If so, create a new variant so the submitted version stays available for later interview rounds.

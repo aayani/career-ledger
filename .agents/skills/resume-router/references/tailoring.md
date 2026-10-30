@@ -1,6 +1,6 @@
 # Resume Tailoring
 
-Use this reference to decide what a resume should emphasize. It selects and frames facts from `docs/career.md`; it never adds facts.
+Use this reference to decide what a resume should emphasize. It selects and frames facts from `career.yaml`; it never adds facts.
 
 ## Requirement map
 
@@ -12,7 +12,7 @@ Build this map for **particular position** from the vacancy, and for **specific 
    - critical keywords, such as tools, methods, and domain terms, in the source's exact wording;
    - seniority and scope signals;
    - the problem the role is hired to solve, when the source states it.
-2. Map each requirement to supporting record IDs in `docs/career.md` and classify it:
+2. Map each requirement to supporting employment or skill IDs in `career.yaml` and classify it:
    - **Direct:** a role, achievement, project, or activity demonstrates it;
    - **Transferable:** adjacent evidence supports it, with a clear bridge;
    - **Gap:** no record supports it;
@@ -27,7 +27,7 @@ When the scope supplies a role but no vacancy, offer to either use the role fami
 
 - **Follow the reader's skim order.** Give the most detail to the current role and the previous one or two roles, unless an older record is the strongest evidence for the target. Keep the summary short and positioning-focused. Treat `Skills` as a searchable filter list, not a showcase.
 - **Give each role a distinct purpose.** Before selecting bullets, privately complete "This role demonstrates the ability to..." for each role. Choose achievements that support that purpose and avoid repeating the same kind of claim across roles.
-- **Curate skills by evidence.** List only skills whose records cite evidence. Prefer specific skills over generic ones, favour recent use, and omit skills that were only incidental to the target.
+- **Curate skills by evidence.** List only skills supported by their project usage. Prefer specific skills over generic ones, favour recent use, and omit skills that were only incidental to the target.
 - **Keep identity facts consistent.** Use the employers, titles, and dates exactly as recorded so the resume matches LinkedIn and other application material generated from the same database.
 
 ## Output structure

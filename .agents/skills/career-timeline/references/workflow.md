@@ -4,57 +4,48 @@
 
 Run `make inspect`, then use these states:
 
-- `missing` or `empty`: explain that the database stores neutral evidence, then present exactly these two onboarding options and wait for the user's choice:
-  1. **Import from CV/resume:** use an existing document as unverified source material.
+- `missing` or `empty`: explain that the database stores neutral career facts, then present exactly these two onboarding options and wait for the user's choice:
+  1. **Import from CV/resume:** use an existing document as source material.
   2. **Guided interactive interview:** build the career record one question at a time.
-- `populated`: run `make validate`. Repair structural errors before unrelated intake; warnings may remain when they describe honest data gaps.
+- `invalid`: run `make validate` and repair structural errors before intake.
+- `populated`: run `make validate` before making unrelated updates.
 
-Continue when the schema version matches `supported_schema_version` in [career-schema.yaml](career-schema.yaml). Explain and confirm any older-schema migration; stop structural edits for a newer or missing schema version.
+For a valid populated database, orient the user with its current location, latest employment, covered education and employment records, project count, skill-usage count, private-record count, and unresolved top-level notes. Follow the requested scope instead of presenting another menu.
 
-For a valid populated database, orient the user with its last review, latest role, covered sections, open follow-ups, estimates, and unverified claims. Follow the scope they requested instead of presenting another menu. Resume an earlier interview from open follow-ups.
-
-Treat imported claims as matching, new, richer, conflicting, or ambiguous. Do not duplicate or re-ask matching claims; present conflicts neutrally for the user to resolve. A source CV is evidence input: do not persist it, copy promotional prose, or treat it alone as verification. Clarifying gaps after an import is part of source reconciliation, not a third onboarding option.
+Treat imported claims as matching, new, richer, conflicting, or ambiguous. Do not duplicate or re-ask matching claims. A source CV is evidence input: do not persist it, copy promotional prose, or treat it as stronger than the source supports.
 
 ## Structure the database
 
-Treat [career-schema.yaml](career-schema.yaml) as the source of truth for database structure and authoring policy. The parser and validator load it directly. Use `tests/fixtures/career-valid.md` as a minimal hierarchy example, then validate the candidate instead of reproducing field lists or controlled values in instructions.
+Keep the root keys required by the schema. Empty `education` and `employment` arrays are valid. Keep employment in reverse chronological order when dates are known. Keep work-item relevance weights independent; they are integer scores from 1 to 10 and do not need to total 10.
 
 ## Interview factual gaps
 
-Build a dependency tree for the selected scope and ask the single frontier question that unlocks the most useful next branch. Recompute after each answer. Inspect repository and supplied sources before asking for facts already available.
+Build a dependency tree for the selected scope and ask the single frontier question that unlocks the most useful next branch. Recompute after each answer. Inspect the repository and supplied sources before asking for facts already available.
 
-Do not suggest biographical answers such as employers, dates, metrics, technologies, ownership, or evidence sources. Useful achievement probes cover the prior problem, personal contribution, others' ownership, observed change, measurement quality, safe provenance, and disclosure.
+Do not suggest biographical answers such as employers, dates, outcomes, skills, or evidence sources. Useful work-item probes cover the context, personal contribution, observed outcome, safe evidence note, relevant skills, and relative relevance.
 
-If a material term remains unfamiliar after inspecting available sources, pause that branch and offer one question containing the applicable choices:
-
-1. confirm a clearly labeled plausible meaning, when one genuinely exists;
-2. authorize internet research and then confirm the result in the user's context; or
-3. explain the term directly.
-
-Close a branch when answered or when the user marks it unknown, approximate, private, skipped, out of scope, paused, or finished. Do not pressure the user to reopen it in the same session. Record a follow-up only when resolving the gap would materially improve an application.
+Close a branch when answered or when the user marks it unknown, approximate, private, skipped, out of scope, paused, or finished. Do not pressure the user to reopen it in the same session. Add a top-level note only when the unresolved gap would materially improve a future application.
 
 ## Classify and preserve facts
 
-- `Verified`: confirmed by the user with honest provenance; described personal recollection is acceptable.
-- `Estimated`: the event is confirmed but a date, quantity, scale, or result is approximate.
-- `Unverified`: imported, inferred, conflicting, or insufficiently confirmed.
+- Never turn an approximate fact into an exact one.
+- Keep safe evidence notes short and exclude confidential documents, credentials, internal URLs, customer data, and employer-sensitive material.
+- Prefer accurate qualitative outcomes over invented metrics.
+- Keep `private: true` records out of application materials.
+- Reuse a stable skill ID across project usages while keeping the usage's name and optional proficiency local to that project.
+- Preserve employment IDs through wording and factual corrections.
+- Match records by stable ID first, then organization, role, subject, and dates.
 
-Evidence notes may cite safe provenance but never store source documents, credentials, internal URLs, customer data, proprietary details, or employer-sensitive material. Prefer accurate qualitative outcomes over invented metrics.
-
-Choose a schema-valid ownership value from demonstrated contribution. Add a schema-valid disclosure exception only when the application-safe default does not apply.
-
-Match records by stable ID, then type, organization, subject, and dates. Preserve IDs through wording and factual corrections. Make targeted edits, retain unrelated content and disclosure restrictions, keep employers reverse chronological, and maintain typed references.
-
-The user's requested update and clarified answers authorize a coherent write once facts, provenance, verification, ownership, disclosure, conflicts, and uncertainty are resolved. Ask for confirmation only when a material choice remains, a value would be inferred, sources conflict, an unresolved claim would be preserved, or migration would reinterpret records.
+Make targeted edits, retain unrelated content and privacy flags, and reconcile concurrent changes before writing.
 
 ## Write safely
 
-1. Re-read the target and retain its baseline.
+1. Re-read `career.yaml` and retain its baseline.
 2. Build a complete candidate outside the target.
-3. Run `make validate path=<candidate>`; partial but structurally valid databases are allowed.
+3. Run `make validate path=<candidate>`.
 4. Do not replace the target while errors remain.
 5. Re-read and reconcile any concurrent target change.
 6. Apply the candidate through a patch or safe atomic replacement.
 7. Run `make check` on the final repository.
 
-Use `make validate-complete` only when a downstream resume workflow requires roles and skills. Report changed records, estimates, unverified claims, disclosure exceptions, follow-ups, and validation results. Update `Last reviewed` only after a successful factual update or completed review.
+Use `make validate-complete` only when a downstream resume workflow requires at least one employment and one skill usage. Report changed records, approximate values, private records, unresolved notes, and validation results.

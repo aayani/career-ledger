@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate the canonical Markdown career evidence database."""
+"""Validate the canonical YAML career database."""
 
 from __future__ import annotations
 
@@ -7,220 +7,87 @@ import argparse
 import re
 import sys
 from dataclasses import dataclass
-from datetime import date
 from pathlib import Path
+from typing import Iterable
 
 try:
-    from scripts.career_document import (
-        Document, Record, is_placeholder, parse_document, unknown_section_fields,
-    )
-    from scripts.career_schema import (
-        ACHIEVEMENT_WORD_LIMIT, DATE_PATTERN, ID_PATTERN, LANGUAGE_LEVELS,
-        METADATA_FIELDS, METADATA_VALUES, MONTH_PATTERN, RECORD_SPECS,
-        ROLE_SCOPE_WORD_LIMIT, SUPPORTED_SCHEMA_VERSION, TAG_PATTERN, YEAR_PATTERN,
-    )
+    from scripts.career_document import CareerDocumentError, load_document
+    from scripts.career_schema import VALIDATOR
 except ModuleNotFoundError:  # Direct execution from the scripts directory.
-    from career_document import (
-        Document, Record, is_placeholder, parse_document, unknown_section_fields,
-    )
-    from career_schema import (
-        ACHIEVEMENT_WORD_LIMIT, DATE_PATTERN, ID_PATTERN, LANGUAGE_LEVELS,
-        METADATA_FIELDS, METADATA_VALUES, MONTH_PATTERN, RECORD_SPECS,
-        ROLE_SCOPE_WORD_LIMIT, SUPPORTED_SCHEMA_VERSION, TAG_PATTERN, YEAR_PATTERN,
-    )
+    from career_document import CareerDocumentError, load_document
+    from career_schema import VALIDATOR
 
 
 @dataclass(frozen=True)
 class Finding:
     level: str
-    line: int
+    path: str
     message: str
 
-
-def split_references(value: str) -> list[str]:
-    if value in {"", "Not applicable", "Not documented", "Unknown"}:
-        return []
-    return [item.strip() for item in value.split(",") if item.strip()]
-
-
-def month_index(value: str) -> int | None:
-    if not MONTH_PATTERN.fullmatch(value):
-        return None
-    year, month = (int(part) for part in value.split("-"))
-    return year * 12 + month
+    @property
+    def line(self) -> int:
+        """Compatibility shim for callers of the former Markdown validator."""
+        return 1
 
 
-def date_is_valid(value: str, precision: str) -> bool:
-    patterns = {"year": YEAR_PATTERN, "month": MONTH_PATTERN, "year-or-month": DATE_PATTERN}
-    return bool(patterns[precision].fullmatch(value))
+def _json_path(parts: Iterable[object]) -> str:
+    path = "$"
+    for part in parts:
+        if isinstance(part, int):
+            path += f"[{part}]"
+        elif isinstance(part, str) and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", part):
+            path += f".{part}"
+        else:
+            path += f"[{part!r}]"
+    return path
 
 
-def validate_metadata(document: Document, text: str) -> list[Finding]:
-    findings = [
-        Finding("ERROR", 1, f"missing metadata field: {name}")
-        for name in sorted(METADATA_FIELDS - document.metadata.keys())
-    ]
-    for name, entry in document.metadata.items():
-        if not entry.value:
-            findings.append(Finding("ERROR", entry.line, f"empty metadata field: {name}"))
-    schema = document.metadata.get("Schema version")
-    if schema and schema.value and schema.value != SUPPORTED_SCHEMA_VERSION:
-        findings.append(Finding(
-            "ERROR", schema.line,
-            f"unsupported schema version: {schema.value} (supported: {SUPPORTED_SCHEMA_VERSION})",
-        ))
-    reviewed = document.metadata.get("Last reviewed")
-    if reviewed and reviewed.value:
-        try:
-            date.fromisoformat(reviewed.value)
-        except ValueError:
-            findings.append(Finding("ERROR", reviewed.line, f"invalid last-reviewed date: {reviewed.value}"))
-    for name, expected in METADATA_VALUES.items():
-        entry = document.metadata.get(name)
-        if entry and entry.value and entry.value != expected:
-            findings.append(Finding("ERROR", entry.line, f"invalid {name.lower()}: {entry.value}"))
-    if is_placeholder(text):
-        findings.append(Finding("ERROR", 1, "unresolved template placeholder found"))
-    return findings
-
-
-def validate_languages(document: Document) -> list[Finding]:
-    return [
-        Finding("ERROR", entry.line, f"invalid language level: {entry.value}")
-        for entry in document.languages.values()
-        if entry.value not in LANGUAGE_LEVELS
-    ]
-
-
-def validate_record_shape(record: Record) -> list[Finding]:
-    findings = []
-    spec = RECORD_SPECS[record.kind]
-    allowed = spec.required | spec.optional
-    for name, entry in record.fields.items():
-        if name not in allowed:
-            findings.append(Finding("ERROR", entry.line, f"unknown {record.kind} field: {name}"))
-    for name in sorted(spec.required - record.fields.keys()):
-        findings.append(Finding("ERROR", record.line, f"{record.kind} '{record.title}' missing {name}"))
-    for name in sorted(spec.required & record.fields.keys()):
-        entry = record.fields[name]
-        if not entry.value and name != "Responsibilities":
-            findings.append(Finding("ERROR", entry.line, f"{record.kind} '{record.title}' has empty {name}"))
-    identifier = record.fields.get("ID")
-    if identifier:
-        if not ID_PATTERN.fullmatch(identifier.value):
-            findings.append(Finding("ERROR", identifier.line, f"invalid semantic ID: {identifier.value}"))
-        elif not identifier.value.startswith(spec.prefix):
-            findings.append(Finding("ERROR", identifier.line, f"ID prefix does not match {record.kind}: {identifier.value}"))
-    for name, allowed_values in spec.controlled.items():
-        entry = record.fields.get(name)
-        if entry and entry.value not in allowed_values:
-            findings.append(Finding("ERROR", entry.line, f"invalid {name}: {entry.value}"))
-    for name, rule in spec.dates.items():
-        entry = record.fields.get(name)
-        if entry and entry.value not in rule.specials and not date_is_valid(entry.value, rule.precision):
-            findings.append(Finding("ERROR", entry.line, f"invalid {name.lower()} value: {entry.value}"))
-    start, end = record.fields.get("Start"), record.fields.get("End")
-    if start and end and DATE_PATTERN.fullmatch(start.value) and DATE_PATTERN.fullmatch(end.value):
-        normalized_start = start.value + ("-01" if len(start.value) == 4 else "")
-        normalized_end = end.value + ("-12" if len(end.value) == 4 else "")
-        if normalized_end < normalized_start:
-            findings.append(Finding("ERROR", end.line, "end date precedes start date"))
-    tags = record.fields.get("Tags")
-    if tags:
-        for tag in split_references(tags.value):
-            if not TAG_PATTERN.fullmatch(tag):
-                findings.append(Finding("ERROR", tags.line, f"invalid tag: {tag}"))
-    return findings
+def _skill_usage_count(document: dict[str, object]) -> int:
+    count = 0
+    employment = document.get("employment", [])
+    if not isinstance(employment, list):
+        return 0
+    for job in employment:
+        if not isinstance(job, dict):
+            continue
+        projects = job.get("projects", [])
+        if not isinstance(projects, list):
+            continue
+        for project in projects:
+            if not isinstance(project, dict):
+                continue
+            skills = project.get("skills", [])
+            if isinstance(skills, list):
+                count += len(skills)
+    return count
 
 
 def validate(path: Path, require_complete: bool = False) -> list[Finding]:
-    text = path.read_text(encoding="utf-8")
-    document = parse_document(text)
-    findings = [Finding("ERROR", issue.line, issue.message) for issue in document.issues]
-    findings.extend(Finding("ERROR", issue.line, issue.message) for issue in unknown_section_fields(document))
-    findings.extend(validate_metadata(document, text))
-    findings.extend(validate_languages(document))
-    all_ids: dict[str, Record] = {}
-    for record in document.records:
-        findings.extend(validate_record_shape(record))
-        identifier = record.fields.get("ID")
-        if not identifier or not ID_PATTERN.fullmatch(identifier.value):
-            continue
-        if identifier.value in all_ids:
-            findings.append(Finding("ERROR", identifier.line, f"duplicate ID: {identifier.value}"))
-        else:
-            all_ids[identifier.value] = record
-    for record in document.records:
-        spec = RECORD_SPECS[record.kind]
-        for name, allowed_kinds in spec.references.items():
-            entry = record.fields.get(name)
-            if not entry:
-                continue
-            for reference in split_references(entry.value):
-                target = all_ids.get(reference)
-                if target is None:
-                    findings.append(Finding("ERROR", entry.line, f"broken reference: {reference}"))
-                elif target.kind not in allowed_kinds:
-                    findings.append(Finding("ERROR", entry.line, f"invalid {name} reference type: {reference}"))
-        if record.kind == "achievement":
-            outcome = record.fields.get("Outcome")
-            verification = record.fields.get("Verification")
-            evidence = record.fields.get("Evidence")
-            word_count = sum(len(entry.value.split()) for entry in record.fields.values())
-            if word_count > ACHIEVEMENT_WORD_LIMIT:
-                findings.append(Finding("WARNING", record.line, f"achievement '{record.title}' is {word_count} words"))
-            if verification and verification.value == "Verified" and outcome and re.search(r"\d", outcome.value):
-                if not evidence or evidence.value in {"", "Not documented"}:
-                    findings.append(Finding("ERROR", outcome.line, "verified numerical outcome needs an evidence reference"))
-            if verification and verification.value != "Verified":
-                findings.append(Finding("WARNING", record.line, f"achievement '{record.title}' is {verification.value.lower()}"))
-            if outcome and outcome.value in {"", "Not documented", "Unknown"}:
-                findings.append(Finding("WARNING", outcome.line, f"achievement '{record.title}' has no documented outcome"))
-        elif record.kind == "role":
-            scope = record.fields.get("Scope")
-            if scope and len(scope.value.split()) > ROLE_SCOPE_WORD_LIMIT:
-                findings.append(Finding(
-                    "WARNING", scope.line,
-                    f"role '{record.title}' scope exceeds {ROLE_SCOPE_WORD_LIMIT} words",
-                ))
-        elif record.kind == "skill":
-            evidence = record.fields.get("Evidence")
-            if not evidence or not split_references(evidence.value):
-                findings.append(Finding("WARNING", record.line, f"skill '{record.title}' has no linked evidence"))
-        elif record.kind == "followup":
-            status = record.fields.get("Status")
-            if status and status.value == "Open":
-                findings.append(Finding("WARNING", record.line, f"open follow-up: {record.title}"))
-    if require_complete:
-        if not any(record.kind == "role" for record in document.records):
-            findings.append(Finding("ERROR", 1, "no role records found"))
-        if not any(record.kind == "skill" for record in document.records):
-            findings.append(Finding("ERROR", 1, "no skill records found"))
-    roles = [
-        record for record in document.records
-        if record.kind == "role" and record.fields.get("Career stage")
-        and record.fields["Career stage"].value == "Professional"
+    """Return schema and completeness findings for a career YAML file."""
+    try:
+        document = load_document(path)
+    except CareerDocumentError as error:
+        return [Finding("ERROR", "$", str(error))]
+
+    findings = [
+        Finding("ERROR", _json_path(error.absolute_path), error.message)
+        for error in VALIDATOR.iter_errors(document)
     ]
-    starts = [record.fields["Start"].value for record in roles if "Start" in record.fields]
-    dated_starts = [value for value in starts if MONTH_PATTERN.fullmatch(value)]
-    if dated_starts != sorted(dated_starts, reverse=True):
-        findings.append(Finding("WARNING", 1, "professional roles are not reverse chronological"))
-    for newer, older in zip(roles, roles[1:]):
-        newer_start = month_index(newer.fields.get("Start").value if newer.fields.get("Start") else "")
-        older_end = month_index(older.fields.get("End").value if older.fields.get("End") else "")
-        if newer_start is None or older_end is None:
-            continue
-        separation = newer_start - older_end
-        if separation <= 0:
-            findings.append(Finding("WARNING", older.line, f"role chronology overlaps with newer role '{newer.title}'"))
-        elif separation > 7:
-            findings.append(Finding("WARNING", older.line, f"career gap longer than six months before newer role '{newer.title}'"))
-    return sorted(findings, key=lambda item: (item.line, item.level, item.message))
+
+    if require_complete:
+        employment = document.get("employment")
+        if not isinstance(employment, list) or not employment:
+            findings.append(Finding("ERROR", "$.employment", "no employment records found"))
+        if _skill_usage_count(document) == 0:
+            findings.append(Finding("ERROR", "$.employment", "no skill usages found"))
+
+    unique = {(item.level, item.path, item.message): item for item in findings}
+    return sorted(unique.values(), key=lambda item: (item.path, item.level, item.message))
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("path", nargs="?", default="docs/career.md", type=Path)
+    parser.add_argument("path", nargs="?", default="career.yaml", type=Path)
     parser.add_argument("--require-complete", action="store_true")
     parser.add_argument("--warnings-as-errors", action="store_true")
     args = parser.parse_args()
@@ -229,7 +96,7 @@ def main() -> int:
         return 2
     findings = validate(args.path, require_complete=args.require_complete)
     for finding in findings:
-        print(f"{finding.level} {args.path}:{finding.line}: {finding.message}")
+        print(f"{finding.level} {args.path}:{finding.path}: {finding.message}")
     errors = sum(item.level == "ERROR" for item in findings)
     warnings = sum(item.level == "WARNING" for item in findings)
     print(f"Validation complete: {errors} error(s), {warnings} warning(s)")

@@ -1,7 +1,7 @@
 .PHONY: pdf inspect validate validate-complete validate-strict test check
 
 CORE_RUN = uv run --with-requirements requirements/core.txt
-CAREER_PATH = $(if $(strip $(path)),$(path),docs/career.md)
+CAREER_PATH = $(if $(strip $(path)),$(path),career.yaml)
 
 # Usage: make pdf path=docs/resume/backend.md
 pdf:

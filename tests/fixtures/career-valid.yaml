@@ -1,0 +1,36 @@
+person:
+  name:
+    first: Example
+    last: Person
+  contact:
+    phone: "+46701234567"
+    email: example@example.com
+  languages:
+    - name: English
+      proficiency: professional
+
+location:
+  city:
+    name: Stockholm
+    country: Sweden
+
+education: []
+
+employment:
+  - id: employment-example-engineer-2024
+    jobTitle: Engineer
+    company:
+      name: Example Ltd
+    type: permanent
+    projects:
+      - name: Customer API
+        description: Built and maintained customer-facing services.
+        outcome: Improved service reliability.
+        evidence: Confirmed by the candidate.
+        skills:
+          - id: skill-python
+            name: Python
+            proficiency: advanced
+        weightage: 8
+    startDate: "2024-01"
+    endDate: present

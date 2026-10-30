@@ -25,11 +25,11 @@ Use it to:
 
 ### One dependable career record
 
-Maintain a canonical Markdown database at `docs/career.md`. Stable semantic IDs connect roles, achievements, skills, projects, and follow-ups, so the history remains consistent as wording evolves.
+Maintain a canonical YAML database at `career.yaml`. Stable employment and skill IDs keep the history consistent as wording and skill usage evolve.
 
 ### Evidence-aware by design
 
-Every material achievement can record verification status, provenance, personal ownership, and disclosure restrictions. Honest qualitative results are preferred over invented metrics.
+Work items can record personal contribution, outcome, and a safe evidence note. Education, employment, and skill usages can be marked private, and honest qualitative results are preferred over invented metrics.
 
 ### Built for practical AI collaboration
 
@@ -37,7 +37,9 @@ Portable Agent Skills guide career intake and resume creation. Repository instru
 
 ### Quality gates included
 
-The validator checks schema compatibility, required fields, dates, semantic IDs, typed references, controlled values, chronology, evidence gaps, and unresolved follow-ups before career data reaches a resume.
+The validator loads `schema.yaml` as JSON Schema Draft 2020-12 and checks required fields, formats, IDs, controlled values, conditional education fields, privacy flags, and exact duplicates before career data reaches a resume.
+
+The canonical schema lives at `.agents/skills/career-timeline/references/schema.yaml`.
 
 ### Application-ready outputs
 
@@ -75,7 +77,7 @@ Open the repository with an AI coding agent that supports repository instruction
 Help me write my career timeline.
 ```
 
-Choose either an existing resume import or a guided interview. The workflow creates `docs/career.md` and records material gaps as explicit follow-ups.
+Choose either an existing resume import or a guided interview. The workflow creates `career.yaml` and records material gaps as concise top-level notes.
 
 ### 3. Validate the evidence
 
@@ -109,14 +111,14 @@ The PDF is written to `output/backend.pdf`. Pass `--output` directly to `scripts
 
 ## What the ledger captures
 
-- Identity and positioning facts
-- Employers, roles, responsibilities, and achievements
-- Education, certifications, projects, and professional activities
-- Languages and career breaks
-- Skills linked back to supporting evidence
-- Data-quality follow-ups for missing or conflicting facts
+- Identity, contact details, and current location
+- Employers, roles, descriptions, projects, contributions, and outcomes
+- Education, courses, certifications, and licences
+- Languages and evolving skill usages
+- Privacy flags and safe evidence notes
+- Free-form notes for career breaks and unresolved context
 
-The schema supports `Verified`, `Estimated`, and `Unverified` claims; contribution ownership from `Lead` through `Support`; and disclosure exceptions for interview-only or non-disclosable material.
+Project relevance is an independent integer score from 1 to 10. Skill IDs remain stable while names and optional proficiency can vary by project usage.
 
 ## Commands
 
@@ -144,7 +146,7 @@ Run the test suite:
 make test
 ```
 
-Run tests and validation together after `docs/career.md` exists:
+Run tests and validation together after `career.yaml` exists:
 
 ```bash
 make check

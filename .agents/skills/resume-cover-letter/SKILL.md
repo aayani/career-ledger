@@ -1,6 +1,8 @@
 ---
 name: resume-cover-letter
 description: Create or revise a resume, CV, or cover letter as the requested deliverable. Handles role tailoring, regional conventions, ATS-friendly formatting, achievement-focused bullets, and cover-letter structure. Use only for resume/CV or cover-letter work; do not use for career timelines, career evidence databases, portfolio content, or general career-history intake.
+user-invocable: false
+disable-model-invocation: false
 ---
 
 # Resume and Cover Letter Writer
