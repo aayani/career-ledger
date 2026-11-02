@@ -3,11 +3,11 @@
 CORE_RUN = uv run --with-requirements requirements/core.txt
 PROFILE_PATH = $(if $(strip $(path)),$(path),data/profile.yaml)
 
-# Usage: make pdf path=docs/resume/resume.md
+# Usage: make pdf path=docs/resume/resume.md (writes PDF and DOCX)
 pdf:
 	@test -n "$(path)" || { echo "Usage: make pdf path=docs/resume/resume.md"; exit 2; }
-	@uv run --with-requirements requirements/pdf.txt \
-		python scripts/markdown_to_pdf.py "$(path)"
+	@uv run --with-requirements requirements/export.txt \
+		python scripts/export_markdown.py "$(path)"
 
 inspect:
 	@$(CORE_RUN) python scripts/inspect_profile.py "$(PROFILE_PATH)"
