@@ -1,4 +1,4 @@
-.PHONY: pdf inspect validate validate-strict test check
+.PHONY: pdf inspect validate validate-strict test test-export check
 
 CORE_RUN = uv run --with-requirements requirements/core.txt
 PROFILE_PATH = $(if $(strip $(path)),$(path),data/profile.yaml)
@@ -21,4 +21,9 @@ validate-strict:
 test:
 	@$(CORE_RUN) python -m unittest discover -s tests -v
 
-check: test validate
+test-export:
+	@uv run --with-requirements requirements/export.txt \
+		python -m unittest discover -s tests -p 'test_export_markdown.py' \
+		-k docx_preserves_links_and_a4_styling -v
+
+check: test test-export validate
