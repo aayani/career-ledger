@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert a Markdown file to PDF."""
+"""Export a Markdown file to PDF and DOCX."""
 
 import argparse
 from pathlib import Path
@@ -63,19 +63,29 @@ def resolve_output_path(source: Path, requested: Path | None = None) -> Path:
     return requested.resolve() if requested else OUTPUT_DIR / f"{source.stem}.pdf"
 
 
+def resolve_output_paths(
+    source: Path, requested: Path | None = None
+) -> tuple[Path, Path]:
+    pdf = resolve_output_path(source, requested)
+    return pdf, pdf.with_suffix(".docx")
+
+
 def main() -> None:
     args = parse_args()
     source = args.markdown_file.resolve()
-    output = resolve_output_path(source, args.output)
+    pdf_output, docx_output = resolve_output_paths(source, args.output)
 
-    if source == output:
+    if pdf_output == docx_output:
+        raise SystemExit("The output path must not use the .docx extension.")
+    if source in (pdf_output, docx_output):
         raise SystemExit("Input and output paths must be different.")
 
     try:
         import markdown
         import pymupdf
+        from html2docx import html2docx
     except ImportError as error:
-        message = "Install dependencies from requirements/pdf.txt"
+        message = "Install dependencies from requirements/export.txt"
         raise SystemExit(message) from error
 
     html = markdown.markdown(
@@ -90,12 +100,15 @@ def main() -> None:
     )
     document = story.write_with_links(lambda _number, _filled: (page, content, None))
 
-    output.parent.mkdir(parents=True, exist_ok=True)
+    pdf_output.parent.mkdir(parents=True, exist_ok=True)
     try:
-        document.save(str(output))
+        document.save(str(pdf_output))
     finally:
         document.close()
-    print(output)
+
+    docx_output.write_bytes(html2docx(html, title=source.stem).getvalue())
+    print(pdf_output)
+    print(docx_output)
 
 
 if __name__ == "__main__":

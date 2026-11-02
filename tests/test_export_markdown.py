@@ -4,10 +4,15 @@ from contextlib import redirect_stderr
 from io import StringIO
 import unittest
 
-from scripts.markdown_to_pdf import OUTPUT_DIR, parse_args, resolve_output_path
+from scripts.export_markdown import (
+    OUTPUT_DIR,
+    parse_args,
+    resolve_output_path,
+    resolve_output_paths,
+)
 
 
-class MarkdownToPdfTests(unittest.TestCase):
+class ExportMarkdownTests(unittest.TestCase):
     def test_input_and_optional_output(self):
         with TemporaryDirectory() as directory:
             source = Path(directory) / "resume.md"
@@ -30,6 +35,22 @@ class MarkdownToPdfTests(unittest.TestCase):
         self.assertEqual(
             OUTPUT_DIR / "backend-engineer.pdf",
             resolve_output_path(source),
+        )
+
+    def test_docx_output_is_alongside_pdf(self):
+        source = Path("docs/resume/backend-engineer.md")
+        self.assertEqual(
+            (
+                OUTPUT_DIR / "backend-engineer.pdf",
+                OUTPUT_DIR / "backend-engineer.docx",
+            ),
+            resolve_output_paths(source),
+        )
+
+        requested = Path("custom/resume.pdf")
+        self.assertEqual(
+            (requested.resolve(), requested.resolve().with_suffix(".docx")),
+            resolve_output_paths(source, requested),
         )
 
 
