@@ -66,16 +66,17 @@ class ExportMarkdownTests(unittest.TestCase):
 
     @unittest.skipUnless(EXPORT_DEPS_AVAILABLE, "export dependencies are not installed")
     def test_docx_preserves_links_and_a4_styling(self):
-        from scripts.export_markdown import write_docx
+        from scripts.export_markdown import render_docx
 
         with TemporaryDirectory() as directory:
             root = Path(directory)
             output = root / "resume.docx"
-            write_docx(
-                '<h1>Resume</h1><p><a href="https://example.com">Portfolio</a></p>'
-                '<p><img src="ignored.png" alt="Ignored" /></p>',
-                output,
-            )
+            output.write_bytes(render_docx(
+                '<!-- note --><h1>Resume</h1>'
+                '<p><a href="https://example.com">Portfolio</a><!-- note --></p>'
+                '<p>First line<br>Second line</p>'
+                '<p><img src="ignored.png" alt="Ignored"></p>'
+            ))
 
             with ZipFile(output) as archive:
                 document = archive.read("word/document.xml").decode()
@@ -86,6 +87,9 @@ class ExportMarkdownTests(unittest.TestCase):
                 names = archive.namelist()
 
             self.assertIn("https://example.com", relationships)
+            self.assertIn("First line", document)
+            self.assertIn("Second line", document)
+            self.assertNotIn("note", document)
             self.assertNotIn("Portfolio https://example.com", document)
             self.assertFalse(any(name.startswith("word/media/") for name in names))
             self.assertIn('w:w="11906"', document)

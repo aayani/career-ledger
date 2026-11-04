@@ -2,9 +2,9 @@
 """Export a Markdown file to PDF and DOCX."""
 
 import argparse
+from io import BytesIO
 from pathlib import Path
 from typing import Any
-from xml.etree import ElementTree
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = ROOT / "output"
@@ -100,7 +100,7 @@ def _append_hyperlink(paragraph: Any, text: str, url: str) -> None:
 
 def _append_inline(
     paragraph: Any,
-    element: ElementTree.Element,
+    element: Any,
     *,
     bold: bool = False,
     italic: bool = False,
@@ -119,6 +119,9 @@ def _append_inline(
 
     add_text(element.text)
     for child in element:
+        if not isinstance(child.tag, str):
+            add_text(child.tail)
+            continue
         tag = child.tag.lower()
         if tag == "a":
             _append_hyperlink(paragraph, "".join(child.itertext()), child.get("href", ""))
@@ -135,8 +138,10 @@ def _append_inline(
         add_text(child.tail)
 
 
-def _append_blocks(document: Any, elements: list[ElementTree.Element], level: int = 1) -> None:
+def _append_blocks(document: Any, elements: list[Any], level: int = 1) -> None:
     for element in elements:
+        if not isinstance(element.tag, str):
+            continue
         tag = element.tag.lower()
         if tag in {"ul", "ol"}:
             kind = "Bullet" if tag == "ul" else "Number"
@@ -144,9 +149,13 @@ def _append_blocks(document: Any, elements: list[ElementTree.Element], level: in
             for item in element.findall("li"):
                 paragraph = document.add_paragraph(style=f"List {kind}{suffix}")
                 _append_inline(paragraph, item)
-                nested = [child for child in item if child.tag.lower() in {"ul", "ol"}]
+                nested = [
+                    child
+                    for child in item
+                    if isinstance(child.tag, str) and child.tag.lower() in {"ul", "ol"}
+                ]
                 _append_blocks(document, nested, level + 1)
-        elif tag not in {"hr", "img"}:
+        elif tag not in {"hr", "img", "table"}:
             style = {"h1": "Title", "h2": "Heading 2"}.get(tag)
             if style is None and tag.startswith("h"):
                 style = "Heading 3"
@@ -198,16 +207,18 @@ def _style_docx(document: Any) -> None:
             style.paragraph_format.space_after = Pt(1)
 
 
-def write_docx(html: str, output: Path) -> None:
-    """Write an editable, styled DOCX. Images are intentionally omitted."""
+def render_docx(html: str) -> bytes:
+    """Render an editable, styled DOCX. Images are intentionally omitted."""
     from docx import Document
+    from lxml import html as lxml_html
 
-    root = ElementTree.fromstring(f"<body>{html}</body>")
+    root = lxml_html.fragment_fromstring(html, create_parent="body")
     document = Document()
     _append_blocks(document, list(root))
     _style_docx(document)
-    output.parent.mkdir(parents=True, exist_ok=True)
+    output = BytesIO()
     document.save(output)
+    return output.getvalue()
 
 
 def main() -> None:
@@ -239,6 +250,7 @@ def main() -> None:
         archive=pymupdf.Archive(str(source.parent)),
     )
     document = story.write_with_links(lambda _number, _filled: (page, content, None))
+    docx = render_docx(html)
 
     pdf_output.parent.mkdir(parents=True, exist_ok=True)
     try:
@@ -246,7 +258,7 @@ def main() -> None:
     finally:
         document.close()
 
-    write_docx(html, docx_output)
+    docx_output.write_bytes(docx)
     print(pdf_output)
     print(docx_output)
 
