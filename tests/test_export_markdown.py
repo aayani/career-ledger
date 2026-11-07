@@ -7,6 +7,7 @@ from zipfile import ZipFile
 import unittest
 
 from scripts.export_markdown import (
+    MARKDOWN_EXTENSIONS,
     OUTPUT_DIR,
     parse_args,
     paths_overlap,
@@ -14,6 +15,10 @@ from scripts.export_markdown import (
 )
 
 EXPORT_DEPS_AVAILABLE = importlib.util.find_spec("docx") is not None
+PDF_DEPS_AVAILABLE = all(
+    importlib.util.find_spec(dependency) is not None
+    for dependency in ("markdown", "pymupdf")
+)
 
 
 class ExportMarkdownTests(unittest.TestCase):
@@ -57,6 +62,28 @@ class ExportMarkdownTests(unittest.TestCase):
     def test_output_collision_is_case_insensitive(self):
         self.assertTrue(paths_overlap(Path("resume.DOCX"), Path("resume.docx")))
         self.assertTrue(paths_overlap(Path("resume.md"), Path("RESUME.MD")))
+
+    @unittest.skipUnless(PDF_DEPS_AVAILABLE, "PDF dependencies are not installed")
+    def test_pdf_resolves_heading_links(self):
+        import markdown
+
+        from scripts.export_markdown import write_pdf
+
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "resume.md"
+            output = root / "resume.pdf"
+            source.write_text(
+                "[Experience](#experience)\n\n## Experience\n", encoding="utf-8"
+            )
+            html = markdown.markdown(
+                source.read_text(encoding="utf-8"),
+                extensions=MARKDOWN_EXTENSIONS,
+            )
+
+            self.assertIn('id="experience"', html)
+            write_pdf(html, source, output)
+            self.assertTrue(output.read_bytes().startswith(b"%PDF"))
 
     @unittest.skipUnless(EXPORT_DEPS_AVAILABLE, "export dependencies are not installed")
     def test_docx_preserves_links_and_a4_styling(self):

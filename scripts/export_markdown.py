@@ -7,6 +7,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_DIR = ROOT / "output"
+MARKDOWN_EXTENSIONS = ("extra", "sane_lists", "toc")
 
 RESUME_CSS = """
 body {
@@ -254,7 +255,7 @@ def main() -> None:
         raise SystemExit(message) from error
 
     html = markdown.markdown(
-        source.read_text(encoding="utf-8"), extensions=["extra", "sane_lists"]
+        source.read_text(encoding="utf-8"), extensions=MARKDOWN_EXTENSIONS
     )
     output.parent.mkdir(parents=True, exist_ok=True)
     try:

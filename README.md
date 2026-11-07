@@ -41,7 +41,7 @@ Generated resumes are saved under `docs/resume/`. Exported PDF and DOCX files ar
 
 Career Ledger separates durable career facts from application-specific presentation:
 
-![Career Ledger terminal walkthrough from import to PDF export](./docs/images/terminal-demo.gif)
+![Career Ledger terminal walkthrough from import to PDF or DOCX export](./docs/images/terminal-demo.gif)
 
 ### Use the career-ledger skill
 
@@ -114,6 +114,7 @@ make docx path=docs/resume/CHANGE_ME.md
 make inspect          # Inspect profile state
 make pdf              # Export a resume to PDF (requires path=...)
 make docx             # Export a resume to DOCX (requires path=...)
+make gifs             # Regenerate README animations
 make validate         # Validate the profile
 make validate-strict  # Treat warnings as failures
 make test             # Run tests
