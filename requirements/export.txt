@@ -1,0 +1,4 @@
+lxml==6.0.2
+Markdown==3.11.2
+PyMuPDF==2.0
+python-docx==1.2.0

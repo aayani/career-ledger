@@ -39,8 +39,8 @@ jobs:
         uses: astral-sh/setup-uv@v7
       - name: Run tests
         run: make test
-      - name: Verify PDF dependencies
-        run: uv run --with-requirements requirements/pdf.txt python -c "import markdown, pymupdf"
+      - name: Test exports
+        run: make test-export
       - name: Validate profile
         if: ${{ hashFiles('data/profile.yaml') != '' }}
         run: make validate
