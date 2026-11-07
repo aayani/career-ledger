@@ -25,6 +25,7 @@ Do not modify third-party or vendored skills unless the user explicitly asks to 
 
 - `career-ledger`
 - `resume-router`
+- `resume-validator`
 
 #### Third-Party Skills
 
