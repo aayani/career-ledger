@@ -1,13 +1,17 @@
-.PHONY: pdf inspect validate validate-strict test test-export check
+.PHONY: pdf docx inspect validate validate-strict test test-export check
 
 CORE_RUN = uv run --with-requirements requirements/core.txt
 PROFILE_PATH = $(if $(strip $(path)),$(path),data/profile.yaml)
 
-# Usage: make pdf path=docs/resume/resume.md (writes PDF and DOCX)
 pdf:
 	@test -n "$(path)" || { echo "Usage: make pdf path=docs/resume/resume.md"; exit 2; }
 	@uv run --with-requirements requirements/export.txt \
-		python scripts/export_markdown.py "$(path)"
+		python scripts/export_markdown.py "$(path)" --format pdf
+
+docx:
+	@test -n "$(path)" || { echo "Usage: make docx path=docs/resume/resume.md"; exit 2; }
+	@uv run --with-requirements requirements/export.txt \
+		python scripts/export_markdown.py "$(path)" --format docx
 
 inspect:
 	@$(CORE_RUN) python scripts/inspect_profile.py "$(PROFILE_PATH)"

@@ -14,7 +14,7 @@ Career details drift across old resumes, profiles, documents, and memory. Career
 - Keep undisclosable education, employment, and skill usage out of application materials.
 - Preserve unresolved gaps without turning them into confident claims.
 - Generate general, role-focused, or vacancy-specific resumes.
-- Export resumes to PDF and DOCX together.
+- Export resumes to PDF or DOCX.
 
 > [!IMPORTANT]
 > Imported resumes are source material, not proof. Career Ledger keeps uncertain details visible until you confirm or close them.
@@ -101,16 +101,19 @@ Or start a guided interview:
 
 Choose a general resume, a specific role, or a particular vacancy. The result is saved under `docs/resume/`.
 
-### 4. Export to PDF and DOCX
+### 4. Export to PDF or DOCX
 
 ```sh
 make pdf path=docs/resume/CHANGE_ME.md
+make docx path=docs/resume/CHANGE_ME.md
 ```
 
 ## Commands
 
 ```bash
 make inspect          # Inspect profile state
+make pdf              # Export a resume to PDF (requires path=...)
+make docx             # Export a resume to DOCX (requires path=...)
 make validate         # Validate the profile
 make validate-strict  # Treat warnings as failures
 make test             # Run tests

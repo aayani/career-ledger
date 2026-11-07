@@ -10,7 +10,7 @@ from scripts.export_markdown import (
     OUTPUT_DIR,
     parse_args,
     paths_overlap,
-    resolve_output_paths,
+    resolve_output_path,
 )
 
 EXPORT_DEPS_AVAILABLE = importlib.util.find_spec("docx") is not None
@@ -21,43 +21,37 @@ class ExportMarkdownTests(unittest.TestCase):
         with TemporaryDirectory() as directory:
             source = Path(directory) / "resume.md"
             source.write_text("# Resume\n", encoding="utf-8")
-            args = parse_args([str(source)])
+            args = parse_args([str(source), "--format", "pdf"])
             self.assertEqual(source, args.markdown_file)
+            self.assertEqual("pdf", args.format)
             self.assertIsNone(args.output)
 
             output = Path(directory) / "resume.pdf"
-            args = parse_args([str(source), "--output", str(output)])
+            args = parse_args(
+                [str(source), "--format", "pdf", "--output", str(output)]
+            )
             self.assertEqual(output, args.output)
 
     def test_missing_input_is_rejected(self):
         with redirect_stderr(StringIO()):
             with self.assertRaises(SystemExit):
-                parse_args(["missing.md"])
+                parse_args(["missing.md", "--format", "pdf"])
 
-    def test_default_output_uses_output_directory(self):
+    def test_default_outputs_use_output_directory(self):
         source = Path("docs/resume/backend-engineer.md")
         self.assertEqual(
-            (
-                OUTPUT_DIR / "backend-engineer.pdf",
-                OUTPUT_DIR / "backend-engineer.docx",
-            ),
-            resolve_output_paths(source),
+            OUTPUT_DIR / "backend-engineer.pdf",
+            resolve_output_path(source, "pdf"),
         )
-
-    def test_docx_output_is_alongside_pdf(self):
-        source = Path("docs/resume/backend-engineer.md")
         self.assertEqual(
-            (
-                OUTPUT_DIR / "backend-engineer.pdf",
-                OUTPUT_DIR / "backend-engineer.docx",
-            ),
-            resolve_output_paths(source),
+            OUTPUT_DIR / "backend-engineer.docx",
+            resolve_output_path(source, "docx"),
         )
 
         requested = Path("custom/resume.pdf")
         self.assertEqual(
-            (requested.resolve(), requested.resolve().with_suffix(".docx")),
-            resolve_output_paths(source, requested),
+            requested.resolve(),
+            resolve_output_path(source, "pdf", requested),
         )
 
     def test_output_collision_is_case_insensitive(self):
@@ -66,17 +60,18 @@ class ExportMarkdownTests(unittest.TestCase):
 
     @unittest.skipUnless(EXPORT_DEPS_AVAILABLE, "export dependencies are not installed")
     def test_docx_preserves_links_and_a4_styling(self):
-        from scripts.export_markdown import render_docx
+        from scripts.export_markdown import write_docx
 
         with TemporaryDirectory() as directory:
             root = Path(directory)
             output = root / "resume.docx"
-            output.write_bytes(render_docx(
+            write_docx(
                 '<!-- note --><h1>Resume</h1>'
                 '<p><a href="https://example.com">Portfolio</a><!-- note --></p>'
                 '<p>First line<br>Second line</p>'
-                '<p><img src="ignored.png" alt="Ignored"></p>'
-            ))
+                '<p><img src="ignored.png" alt="Ignored"></p>',
+                output,
+            )
 
             with ZipFile(output) as archive:
                 document = archive.read("word/document.xml").decode()

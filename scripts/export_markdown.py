@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""Export a Markdown file to PDF and DOCX."""
+"""Export a Markdown file to PDF or DOCX."""
 
 import argparse
-from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -54,6 +53,7 @@ a {
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("markdown_file", type=Path)
+    parser.add_argument("--format", choices=("docx", "pdf"), required=True)
     parser.add_argument("-o", "--output", type=Path)
     args = parser.parse_args(argv)
     if not args.markdown_file.is_file():
@@ -61,11 +61,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return args
 
 
-def resolve_output_paths(
-    source: Path, requested: Path | None = None
-) -> tuple[Path, Path]:
-    pdf = requested.resolve() if requested else OUTPUT_DIR / f"{source.stem}.pdf"
-    return pdf, pdf.with_suffix(".docx")
+def resolve_output_path(
+    source: Path, output_format: str, requested: Path | None = None
+) -> Path:
+    return (
+        requested.resolve()
+        if requested
+        else OUTPUT_DIR / f"{source.stem}.{output_format}"
+    )
 
 
 def paths_overlap(*paths: Path) -> bool:
@@ -207,8 +210,8 @@ def _style_docx(document: Any) -> None:
             style.paragraph_format.space_after = Pt(1)
 
 
-def render_docx(html: str) -> bytes:
-    """Render an editable, styled DOCX. Images are intentionally omitted."""
+def write_docx(html: str, output: Path) -> None:
+    """Write an editable, styled DOCX. Images are intentionally omitted."""
     from docx import Document
     from lxml import html as lxml_html
 
@@ -216,32 +219,12 @@ def render_docx(html: str) -> bytes:
     document = Document()
     _append_blocks(document, list(root))
     _style_docx(document)
-    output = BytesIO()
     document.save(output)
-    return output.getvalue()
 
 
-def main() -> None:
-    args = parse_args()
-    source = args.markdown_file.resolve()
-    pdf_output, docx_output = resolve_output_paths(source, args.output)
+def write_pdf(html: str, source: Path, output: Path) -> None:
+    import pymupdf
 
-    if paths_overlap(pdf_output, docx_output):
-        raise SystemExit("The output path must not use the .docx extension.")
-    if paths_overlap(source, pdf_output, docx_output):
-        raise SystemExit("Input and output paths must be different.")
-
-    try:
-        import markdown
-        import pymupdf
-        import docx  # noqa: F401 - validate the optional export dependency
-    except ImportError as error:
-        message = "Install dependencies from requirements/export.txt"
-        raise SystemExit(message) from error
-
-    html = markdown.markdown(
-        source.read_text(encoding="utf-8"), extensions=["extra", "sane_lists"]
-    )
     page = pymupdf.paper_rect("a4")
     content = page + (36, 36, -36, -36)
     story = pymupdf.Story(
@@ -250,17 +233,40 @@ def main() -> None:
         archive=pymupdf.Archive(str(source.parent)),
     )
     document = story.write_with_links(lambda _number, _filled: (page, content, None))
-    docx = render_docx(html)
-
-    pdf_output.parent.mkdir(parents=True, exist_ok=True)
     try:
-        document.save(str(pdf_output))
+        document.save(str(output))
     finally:
         document.close()
 
-    docx_output.write_bytes(docx)
-    print(pdf_output)
-    print(docx_output)
+
+def main() -> None:
+    args = parse_args()
+    source = args.markdown_file.resolve()
+    output = resolve_output_path(source, args.format, args.output)
+
+    if paths_overlap(source, output):
+        raise SystemExit("Input and output paths must be different.")
+
+    try:
+        import markdown
+    except ImportError as error:
+        message = "Install dependencies from requirements/export.txt"
+        raise SystemExit(message) from error
+
+    html = markdown.markdown(
+        source.read_text(encoding="utf-8"), extensions=["extra", "sane_lists"]
+    )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        if args.format == "pdf":
+            write_pdf(html, source, output)
+        else:
+            write_docx(html, output)
+    except ImportError as error:
+        message = "Install dependencies from requirements/export.txt"
+        raise SystemExit(message) from error
+
+    print(output)
 
 
 if __name__ == "__main__":
