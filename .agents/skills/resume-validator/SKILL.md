@@ -10,6 +10,10 @@ argument-hint: "[resume.md]"
 
 Review only; do not rewrite the resume.
 
+## Input
+
+The Markdown resume to validate.
+
 ## Checks
 
 Score these locked metrics in this order. Do not add, rename, or omit metrics.
@@ -22,17 +26,4 @@ Score these locked metrics in this order. Do not add, rename, or omit metrics.
 
 ## Output
 
-Return only JSON matching:
-
-```ts
-// Return only this array as JSON. Do not include a verdict or surrounding text.
-{
-  "metric": "human_readability" | "completeness" | "impact" | "consistency" | "ats_readiness"; // Locked metric name.
-  "score": number; // Integer from 1–100: 1 means severe problems; 100 means no material problems.
-  "feedback": { // Findings for this metric; use an empty array when there are none.
-    "reason": string; // Specific evidence explaining the issue.
-    "suggestion": string; // Actionable way to fix the issue.
-    "priority": number; // Integer from 1–10, where 10 is most urgent.
-  }[];
-}[]
-```
+Read [references/feedback.ts](references/feedback.ts) and return only JSON matching its schema.
