@@ -37,6 +37,8 @@ jobs:
           python-version: "3.12"
       - name: Set up uv
         uses: astral-sh/setup-uv@v7
+      - name: Install dependencies
+        run: make bootstrap
       - name: Run tests
         run: make test
       - name: Test exports

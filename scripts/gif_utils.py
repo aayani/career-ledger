@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Shared drawing helpers for the repository GIF generators."""
 
 from functools import lru_cache

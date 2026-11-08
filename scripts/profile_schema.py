@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Load the JSON Schema for the canonical YAML profile."""
 
 from __future__ import annotations

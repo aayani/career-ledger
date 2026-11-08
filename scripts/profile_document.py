@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Load the canonical YAML profile without losing duplicate-key errors."""
 
 from __future__ import annotations

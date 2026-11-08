@@ -1,6 +1,6 @@
 ---
 name: resume-router
-description: Route resume or CV requests by scope, gather only missing inputs, and hand off to resume-cover-letter. Do not use for cover-letter-only requests or career-history intake.
+description: Route resume or CV requests by scope, gather only missing inputs, hand off to resume-cover-letter, and validate the result. Excludes cover-letter-only requests and career-history intake.
 user-invocable: false
 disable-model-invocation: false
 ---
@@ -35,6 +35,11 @@ Read [tailoring.md](references/tailoring.md). Build a requirement map for target
 
 Invoke `resume-cover-letter` with scope, evidence, market, existing variant, priorities, gaps, and unresolved inputs. Do not re-ask facts in `data/profile.yaml`. Save resumes under `docs/resume/`.
 
-## Review before delivery
+## Review and validate before delivery
 
-Apply [review.md](references/review.md) before delivery. Correct failures and report remaining gaps, assumptions, and approximations. Preserve submitted variants by creating a new file.
+1. Apply [review.md](references/review.md) and fix every failure.
+2. Invoke `resume-validator` with exactly one input: the saved resume's repository path.
+3. If validation rejects the input, errors, or returns incomplete or nonconforming JSON, report the failure and stop without revising, revalidating, or delivering.
+4. Finish when every metric is 100; `ats_readiness` may be 96–100.
+5. Otherwise, fix supported findings, save, and revalidate the same path. Never invent facts. Allow at most three revision cycles after the initial validation.
+6. If scores remain below these thresholds, report the final findings and scores. Always report gaps, assumptions, and approximations, and preserve submitted variants in a new file.

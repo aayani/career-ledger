@@ -79,6 +79,8 @@ cd career-ledger
 
 Python 3.10 or newer and [`uv`](https://docs.astral.sh/uv/) are required for local commands.
 
+Run `make bootstrap` once to install dependencies into the repository-local `.venv`.
+
 ### 2. Build your profile
 
 Open the repository with an AI coding agent that supports Agent Skills, then import existing material:
@@ -111,6 +113,7 @@ make docx path=docs/resume/CHANGE_ME.md
 ## Commands
 
 ```bash
+make bootstrap        # Install local dependencies
 make inspect          # Inspect profile state
 make pdf              # Export a resume to PDF (requires path=...)
 make docx             # Export a resume to DOCX (requires path=...)
