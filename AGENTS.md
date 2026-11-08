@@ -9,7 +9,7 @@
 ## Session
 
 - At the start of each session, run `python3 scripts/init_session.py` before anything else. Let `<session>` be the exact directory it prints; reuse it for the entire session.
-- Track progress in `<session>/checklist.md`. Store all notes, plans, temporary or working files, logs, exports, and generated artifacts in `<session>/artifacts/`.
+- For each active skill with a checklist template, track progress in `<session>/<skill-name>/checklist.md`. Store all notes, plans, temporary or working files, logs, exports, and generated artifacts in `<session>/artifacts/`.
 - Edit canonical repository files only when the task requires it.
 - Never read or write outside the repository root. Stop and ask if external access is required.
 

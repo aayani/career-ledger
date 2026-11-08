@@ -16,10 +16,12 @@ def init_session(repo_root: Path, now: datetime | None = None) -> Path:
 
     session_dir.mkdir(parents=True)
     (session_dir / "artifacts").mkdir()
-    shutil.copy2(
-        repo_root / ".agents" / "skills" / "career-ledger" / "references" / "checklist.md",
-        session_dir / "checklist.md",
-    )
+
+    skills_dir = repo_root / ".agents" / "skills"
+    for checklist in sorted(skills_dir.glob("*/references/checklist.md")):
+        skill_session_dir = session_dir / checklist.parent.parent.name
+        skill_session_dir.mkdir()
+        shutil.copy2(checklist, skill_session_dir / "checklist.md")
 
     return session_dir
 

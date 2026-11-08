@@ -22,7 +22,7 @@ With no argument, follow the requested profile task. For an unsupported argument
 
 ## Run checklist
 
-Use the current session's `checklist.md`, created from this [template](references/checklist.md). Keep it current until handoff or completion.
+Use the current session's `career-ledger/checklist.md`, created from this [template](references/checklist.md). Keep it current until handoff or completion.
 
 ## Invariants
 
