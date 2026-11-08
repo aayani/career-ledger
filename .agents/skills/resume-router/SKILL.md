@@ -1,6 +1,6 @@
 ---
 name: resume-router
-description: Route resume or CV requests by scope, gather only missing inputs, hand off to resume-cover-letter, and validate generated Markdown resumes. Do not use for cover-letter-only requests or career-history intake.
+description: Route resume or CV requests by scope, gather only missing inputs, hand off to resume-cover-letter, and validate the result. Excludes cover-letter-only requests and career-history intake.
 user-invocable: false
 disable-model-invocation: false
 ---
@@ -38,7 +38,8 @@ Invoke `resume-cover-letter` with scope, evidence, market, existing variant, pri
 ## Review and validate before delivery
 
 1. Apply [review.md](references/review.md) and fix every failure.
-2. Invoke `resume-validator` on the saved Markdown resume and expect its complete feedback JSON as the result. Do not substitute an informal score summary for that JSON.
-3. Stop when all metrics score 100, except `ats_readiness`, which may score 96–100.
-4. Otherwise, fix supported findings, save, and revalidate from the returned feedback JSON. Never invent facts. Limit this to three revision cycles after the initial validation.
-5. If it still fails, report the final findings and scores. Always report gaps, assumptions, and approximations, and preserve submitted variants in a new file.
+2. Invoke `resume-validator` with exactly one input: the saved resume's repository path.
+3. If validation rejects the input, errors, or returns incomplete or nonconforming JSON, report the failure and stop without revising, revalidating, or delivering.
+4. Finish when every metric is 100; `ats_readiness` may be 96–100.
+5. Otherwise, fix supported findings, save, and revalidate the same path. Never invent facts. Allow at most three revision cycles after the initial validation.
+6. If scores remain below these thresholds, report the final findings and scores. Always report gaps, assumptions, and approximations, and preserve submitted variants in a new file.

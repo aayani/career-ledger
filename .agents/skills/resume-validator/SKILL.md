@@ -1,18 +1,25 @@
 ---
 name: resume-validator
-description: Review generated Markdown resumes for natural language, missing information or career gaps, impact, consistency, and ATS readability. Use after Markdown resume generation or when the user asks to validate, critique, or quality-check a Markdown resume.
+description: Review a Markdown resume at a supplied repository path for quality and completeness. Use after resume generation or for validation, critique, or quality checks.
 user-invocable: true
 disable-model-invocation: false
-argument-hint: "[resume.md]"
+argument-hint: "[resume-path]"
 ---
 
 # Resume Validator
 
-Review only. may suggest fixes but not rewrite the resume.
+Review only. Suggest fixes; do not rewrite the resume.
 
 ## Input
 
-The Markdown resume to validate.
+Accept exactly one input: the repository path to the saved Markdown resume.
+
+Reject and stop without scoring if:
+
+- The input is missing, contains multiple paths, or contains resume content.
+- The path is outside the repository or is not a readable, regular `.md` file.
+
+Return only a concise error on rejection. Otherwise, read and validate the file.
 
 ## Checks
 
@@ -59,4 +66,4 @@ Do not penalize:
 
 ## Output
 
-Read [references/feedback.ts](references/feedback.ts) and return only JSON matching its schema.
+Read [references/feedback.ts](references/feedback.ts) and return only schema-compliant JSON. This indicates success; a rejection or error indicates failure.
