@@ -5,7 +5,7 @@ export UV_CACHE_DIR := $(CURDIR)/.uv-cache
 PROFILE_PATH = $(if $(strip $(path)),$(path),data/profile.yaml)
 
 bootstrap:
-	@uv venv .venv
+	@uv venv --allow-existing .venv
 	@uv pip install --python $(PYTHON) \
 		-r requirements/core.txt \
 		-r requirements/export.txt \
