@@ -18,3 +18,4 @@ venv/
 
 # Output
 output/
+.sessions/

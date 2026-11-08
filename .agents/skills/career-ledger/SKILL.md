@@ -20,7 +20,9 @@ Maintain `data/profile.yaml` as the neutral source of truth.
 
 With no argument, follow the requested profile task. For an unsupported argument, list the five accepted arguments and ask the user to choose.
 
-For profile work, read [workflow.md](references/workflow.md) and run `make inspect`. Before creating or restructuring the profile, also read [schema.yaml](references/schema.yaml) and `tests/fixtures/profile-valid.yaml`.
+## Run checklist
+
+Use the current session's `checklist.md`, created from this [template](references/checklist.md). Keep it current until handoff or completion.
 
 ## Invariants
 
@@ -29,4 +31,6 @@ For profile work, read [workflow.md](references/workflow.md) and run `make inspe
 - Ask one factual question per turn. Save confirmed answers promptly. Stop when the user pauses.
 - Preserve stable IDs, unrelated records, privacy flags, and concurrent edits.
 - Follow schema descriptions for data modeling and privacy semantics.
+  - Use this order for gathering facts: name, location, contact, education, then the rest.
+  - When gathering facts for employment or project, confirm with user if they have anything else to add before jumping to the next job or project.
 - Report validation honestly.

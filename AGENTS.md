@@ -1,34 +1,43 @@
 # Agent Instructions
 
-## Conversation style
+## Communication
 
-- Tone: Keep it light, friendly, and reassuring.
-- Clarity: Be direct and cut unnecessary fluff.
-- Conciseness: Use as few words as possible.
-- Directness: Ask questions straight away without preambles.
-- Choices: Present options using numbered lists: (1), (2), (3).
-- Efficiency: Maintain radio silence on internal steps and process execution.
+- Be light, friendly, reassuring, direct, and concise.
+- Ask questions without preambles. Format choices as `(1)`, `(2)`, `(3)`.
+- Do not narrate internal steps or execution.
+
+## Session
+
+- At the start of each session, run `python3 scripts/init_session.py` before anything else. Let `<session>` be the exact directory it prints; reuse it for the entire session.
+- Track progress in `<session>/checklist.md`. Store all notes, plans, temporary or working files, logs, exports, and generated artifacts in `<session>/artifacts/`.
+- Edit canonical repository files only when the task requires it.
+- Never read or write outside the repository root. Stop and ask if external access is required.
+
+### Checklist
+
+Process checklist items from top to bottom:
+
+1. Complete the next applicable `[ ]` item, then mark it `[x]`.
+2. Mark inapplicable items `[-]`.
+3. Mark a blocked item `[!]` and stop.
+4. Do not start a later item while an earlier item is `[ ]`.
+5. In alternative or mode sections, complete the selected section and mark all others `[-]`.
 
 ## Skills
 
-Repository-local skills live in `.agents/skills/` and follow the portable Agent Skills format.
+- Repository skills live only in `.agents/skills/` and use the portable Agent Skills format.
+- Before each request, inspect every `.agents/skills/*/SKILL.md` frontmatter. When a description matches, read that `SKILL.md` completely and follow it; read linked resources only when directed.
+- Do not create provider-specific copies under `.claude/`, `.github/`, `.codex/`, or similar directories.
+- Do not modify third-party or vendored skills unless explicitly asked. Add repository-specific behavior through a repository-owned wrapper or companion skill.
 
-Before working on a request, inspect the frontmatter in each `.agents/skills/*/SKILL.md`. When a skill's description matches the request, read that `SKILL.md` completely and follow its instructions. Read linked resources only when the skill directs you to them.
+### Available
 
-Keep `.agents/skills/` as the single source of truth. Do not create agent-specific copies under `.claude/`, `.github/`, `.codex/`, or similar provider directories.
-
-Do not modify third-party or vendored skills unless the user explicitly asks to update that specific skill. When repository-specific behavior is needed, prefer a repository-owned wrapper or companion skill.
-
-### Available Skills
-
-#### Custom Skills
+#### Custom
 
 - `career-ledger`
 - `resume-router`
 - `resume-validator`
 
-#### Third-Party Skills
+#### Third-Party
 
 - `resume-cover-letter`
-
-Discover current descriptions and routing boundaries from each skill's frontmatter.
